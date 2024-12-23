@@ -201,3 +201,4 @@ user_data_fields = [
 # auth_hooks = [
 # 	"semah.auth.validate"
 # ]
+fixtures = ['Property Setter','Custom Field', 'Print Format']
