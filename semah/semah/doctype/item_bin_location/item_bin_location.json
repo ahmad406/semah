@@ -1,0 +1,133 @@
+{
+ "actions": [],
+ "creation": "2022-03-31 14:21:17.311842",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sub_customer",
+  "warehouse",
+  "bin_location",
+  "batch_no",
+  "expiry",
+  "stored_qty",
+  "stored_in",
+  "length",
+  "height",
+  "width",
+  "area_use",
+  "manufacturing_date",
+  "t_warehouse",
+  "t_bin",
+  "reciept"
+ ],
+ "fields": [
+  {
+   "columns": 2,
+   "fieldname": "warehouse",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Warehouse"
+  },
+  {
+   "columns": 1,
+   "fieldname": "bin_location",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Bin Location"
+  },
+  {
+   "columns": 1,
+   "fieldname": "stored_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Stored Qty "
+  },
+  {
+   "columns": 1,
+   "fieldname": "batch_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Batch no "
+  },
+  {
+   "columns": 1,
+   "fieldname": "expiry",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Expiry"
+  },
+  {
+   "columns": 1,
+   "fieldname": "stored_in",
+   "fieldtype": "Data",
+   "label": "stored in"
+  },
+  {
+   "fieldname": "length",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "length"
+  },
+  {
+   "columns": 1,
+   "fieldname": "height",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "height"
+  },
+  {
+   "columns": 1,
+   "fieldname": "width",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "width"
+  },
+  {
+   "columns": 1,
+   "fieldname": "area_use",
+   "fieldtype": "Float",
+   "label": "area use"
+  },
+  {
+   "fieldname": "sub_customer",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Sub Customer"
+  },
+  {
+   "fieldname": "manufacturing_date",
+   "fieldtype": "Date",
+   "label": "manufacturing_date"
+  },
+  {
+   "fieldname": "t_warehouse",
+   "fieldtype": "Data",
+   "label": "T_Warehouse"
+  },
+  {
+   "fieldname": "t_bin",
+   "fieldtype": "Data",
+   "label": "T_bin"
+  },
+  {
+   "fieldname": "reciept",
+   "fieldtype": "Data",
+   "label": "Reciept"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2022-09-13 11:18:44.093538",
+ "modified_by": "Administrator",
+ "module": "Semah",
+ "name": "item bin location",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

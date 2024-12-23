@@ -1,0 +1,76 @@
+{
+ "actions": [],
+ "creation": "2022-03-29 13:47:35.753740",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_code",
+  "sub_customer_full_name",
+  "sub_customer_group",
+  "address",
+  "contact_person_name",
+  "contact_person_email_id",
+  "contact_person_phone"
+ ],
+ "fields": [
+  {
+   "fieldname": "sub_customer_full_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Sub Customer Full Name"
+  },
+  {
+   "fieldname": "sub_customer_group",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Sub Customer Group",
+   "options": "Customer Group"
+  },
+  {
+   "fieldname": "address",
+   "fieldtype": "Long Text",
+   "in_list_view": 1,
+   "label": "Address "
+  },
+  {
+   "fieldname": "contact_person_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Contact Person Name"
+  },
+  {
+   "fieldname": "contact_person_email_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Contact Person Email ID",
+   "options": "Email"
+  },
+  {
+   "fieldname": "contact_person_phone",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Contact Person Phone",
+   "options": "Phone"
+  },
+  {
+   "description": "Customer and Sub-Customer should be seprated by \"-\". i.e  EXP-GAL",
+   "fieldname": "item_code",
+   "fieldtype": "Data",
+   "label": "Sub Customer Code",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2022-07-27 08:18:09.358284",
+ "modified_by": "Administrator",
+ "module": "Semah",
+ "name": "Sub Customer",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

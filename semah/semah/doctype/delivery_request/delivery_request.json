@@ -1,0 +1,230 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2022-03-30 14:22:41.601843",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "naming_series",
+  "doc_status",
+  "customer",
+  "sub_customer",
+  "warehouse",
+  "column_break_3",
+  "requested_date",
+  "required_date",
+  "section_break_6",
+  "address_html",
+  "primary_address",
+  "column_break_10",
+  "contact_person",
+  "mobile_no",
+  "email_id",
+  "sub_customer_address_and_contact_section",
+  "address_and_contact_details",
+  "column_break_17",
+  "contact_person_email_id",
+  "contact_person_phone",
+  "item_grid_section",
+  "item_grid",
+  "total_qty",
+  "name1",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Customer",
+   "options": "Customer",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sub_customer",
+   "fieldtype": "Select",
+   "label": "Sub customer"
+  },
+  {
+   "fieldname": "required_date",
+   "fieldtype": "Date",
+   "label": "Required Date "
+  },
+  {
+   "fieldname": "address_and_contact_details",
+   "fieldtype": "Small Text",
+   "label": "Address and Contact details",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_6",
+   "fieldtype": "Section Break",
+   "label": "Customer Address and Contact"
+  },
+  {
+   "fieldname": "item_grid",
+   "fieldtype": "Table",
+   "label": "Item Grid",
+   "options": "Item Grid"
+  },
+  {
+   "fetch_from": "customer.customer_warehouse",
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "fetch_from": "customer.customer_primary_address",
+   "fieldname": "address_html",
+   "fieldtype": "Link",
+   "label": "Customer Primary Address",
+   "options": "Address",
+   "read_only": 1
+  },
+  {
+   "fieldname": "primary_address",
+   "fieldtype": "Read Only",
+   "label": "Primary Address",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_10",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "customer.customer_primary_contact",
+   "fieldname": "contact_person",
+   "fieldtype": "Link",
+   "label": "Contact Person",
+   "options": "Contact",
+   "read_only": 1
+  },
+  {
+   "fieldname": "item_grid_section",
+   "fieldtype": "Section Break",
+   "label": "Item Grid"
+  },
+  {
+   "fetch_from": "customer.mobile_no",
+   "fieldname": "mobile_no",
+   "fieldtype": "Read Only",
+   "label": "Mobile No",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "customer.email_id",
+   "fieldname": "email_id",
+   "fieldtype": "Read Only",
+   "label": "Email Id",
+   "read_only": 1
+  },
+  {
+   "fieldname": "contact_person_phone",
+   "fieldtype": "Data",
+   "label": "Contact Person Phone",
+   "options": "Phone",
+   "read_only": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "requested_date",
+   "fieldtype": "Date",
+   "label": "Requested Date"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Delivery Request",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "contact_person_email_id",
+   "fieldtype": "Data",
+   "label": "Contact Person Email ID",
+   "options": "Email",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sub_customer_address_and_contact_section",
+   "fieldtype": "Section Break",
+   "label": "Sub Customer Address and Contact"
+  },
+  {
+   "fieldname": "column_break_17",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "DR.#####"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "doc_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Request Status",
+   "options": "Draft\nTo make Preparation Order\nTo Make Delivery Note\nCompleted\nCancelled",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "{customer_name}",
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Title",
+   "no_copy": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "name1",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "name"
+  },
+  {
+   "fieldname": "total_qty",
+   "fieldtype": "Float",
+   "label": "Total Qty",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2023-09-07 15:15:02.663947",
+ "modified_by": "Administrator",
+ "module": "Semah",
+ "name": "Delivery Request",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

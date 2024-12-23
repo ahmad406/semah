@@ -1,0 +1,116 @@
+{
+ "actions": [],
+ "creation": "2022-04-15 17:37:24.436770",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sub_customer",
+  "warehouse",
+  "bin_location",
+  "batch_no",
+  "manufacturing_date",
+  "stored_qty",
+  "expiry",
+  "stored_in",
+  "length",
+  "width",
+  "height",
+  "area_use"
+ ],
+ "fields": [
+  {
+   "columns": 1,
+   "fieldname": "warehouse",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Warehouse"
+  },
+  {
+   "columns": 1,
+   "fieldname": "bin_location",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Bin Location"
+  },
+  {
+   "columns": 1,
+   "fieldname": "batch_no",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Batch no ",
+   "options": "Batch"
+  },
+  {
+   "columns": 1,
+   "fieldname": "expiry",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Expiry"
+  },
+  {
+   "columns": 1,
+   "fieldname": "stored_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Stored Qty "
+  },
+  {
+   "columns": 1,
+   "fieldname": "stored_in",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "stored in"
+  },
+  {
+   "columns": 1,
+   "fieldname": "length",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "length"
+  },
+  {
+   "columns": 1,
+   "fieldname": "height",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "height"
+  },
+  {
+   "columns": 1,
+   "fieldname": "width",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "width"
+  },
+  {
+   "columns": 1,
+   "fieldname": "area_use",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "area use"
+  },
+  {
+   "fieldname": "sub_customer",
+   "fieldtype": "Data",
+   "label": "Sub Customer"
+  },
+  {
+   "fieldname": "manufacturing_date",
+   "fieldtype": "Date",
+   "label": "manufacturing date"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2022-09-13 11:18:26.217775",
+ "modified_by": "Administrator",
+ "module": "Semah",
+ "name": "item bin display",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

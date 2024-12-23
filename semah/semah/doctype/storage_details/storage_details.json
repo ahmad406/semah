@@ -1,0 +1,144 @@
+{
+ "actions": [],
+ "creation": "2022-03-30 13:37:10.242738",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sub_customer",
+  "t_ware_house",
+  "bin_location",
+  "item_code",
+  "batch_no",
+  "expiry",
+  "display_stored_in",
+  "length",
+  "width",
+  "height",
+  "stored_qty",
+  "area_used",
+  "manufacture",
+  "item_description"
+ ],
+ "fields": [
+  {
+   "columns": 1,
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item code",
+   "options": "Item"
+  },
+  {
+   "columns": 1,
+   "fieldname": "display_stored_in",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Stored in",
+   "options": "\nPallet\nCBM"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "fieldname": "height",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Height"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "fieldname": "length",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Length"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "fieldname": "width",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Width"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "fieldname": "stored_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Stored Qty"
+  },
+  {
+   "fieldname": "area_used",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Area used ",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "batch_no",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Batch No",
+   "options": "Batch"
+  },
+  {
+   "columns": 1,
+   "fieldname": "t_ware_house",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Target warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "columns": 1,
+   "fieldname": "bin_location",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Bin Location",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fetch_from": "batch_no.expiry_date",
+   "fieldname": "expiry",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Expiry",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "batch_no.manufacturing_date",
+   "fieldname": "manufacture",
+   "fieldtype": "Date",
+   "label": "manufacture",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sub_customer",
+   "fieldtype": "Data",
+   "label": "Sub Customer",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "item_code.description",
+   "fieldname": "item_description",
+   "fieldtype": "Data",
+   "label": "Item description"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2022-08-22 09:54:16.279374",
+ "modified_by": "Administrator",
+ "module": "Semah",
+ "name": "Storage details",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

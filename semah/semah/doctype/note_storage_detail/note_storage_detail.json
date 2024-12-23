@@ -1,0 +1,109 @@
+{
+ "actions": [],
+ "creation": "2022-04-21 12:52:01.707722",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_code",
+  "batch_no",
+  "warehouse",
+  "bin_location_name",
+  "manufacture_date",
+  "expiry_date",
+  "stored_in",
+  "area_used",
+  "height",
+  "width",
+  "length",
+  "delivery_qty",
+  "sub_customer"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item code",
+   "options": "Item"
+  },
+  {
+   "fieldname": "batch_no",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Batch No",
+   "options": "Batch"
+  },
+  {
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "label": "Warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "fieldname": "bin_location_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Bin Location Name"
+  },
+  {
+   "fetch_from": "batch_no.manufacturing_date",
+   "fieldname": "manufacture_date",
+   "fieldtype": "Date",
+   "label": "Manufacture date"
+  },
+  {
+   "fieldname": "expiry_date",
+   "fieldtype": "Date",
+   "label": " Expiry Date "
+  },
+  {
+   "fieldname": "stored_in",
+   "fieldtype": "Data",
+   "label": "Stored in "
+  },
+  {
+   "fieldname": "area_used",
+   "fieldtype": "Float",
+   "label": "Area used"
+  },
+  {
+   "fieldname": "height",
+   "fieldtype": "Float",
+   "label": "height"
+  },
+  {
+   "fieldname": "width",
+   "fieldtype": "Float",
+   "label": "width"
+  },
+  {
+   "fieldname": "length",
+   "fieldtype": "Float",
+   "label": "length"
+  },
+  {
+   "fieldname": "delivery_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": " Delivery Qty "
+  },
+  {
+   "fieldname": "sub_customer",
+   "fieldtype": "Data",
+   "label": "Sub customer"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2022-06-13 18:16:05.106157",
+ "modified_by": "Administrator",
+ "module": "Semah",
+ "name": "Note Storage detail",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

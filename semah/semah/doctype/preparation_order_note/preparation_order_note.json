@@ -1,0 +1,243 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2022-03-31 10:12:10.563298",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "order_status",
+  "customer",
+  "sub_customer",
+  "delivery_request",
+  "warehouse",
+  "column_break_4",
+  "requested_date",
+  "required_date",
+  "customer_address_and_contact_section",
+  "customer_primary_address",
+  "primary_address",
+  "column_break_11",
+  "contact_person",
+  "mobile_no",
+  "email_id",
+  "sub_customer_address_and_contact_section",
+  "address_and_contact_details",
+  "column_break_17",
+  "contact_person_email_id",
+  "contact_person_phone",
+  "section_break_6",
+  "item_grid",
+  "total_quantity",
+  "section_break_8",
+  "update_storage",
+  "storage_details",
+  "total_delivery_quantity",
+  "tem",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Customer",
+   "options": "Customer",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sub_customer",
+   "fieldtype": "Select",
+   "label": "Sub Customer"
+  },
+  {
+   "fieldname": "required_date",
+   "fieldtype": "Date",
+   "label": "Required Date "
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "address_and_contact_details",
+   "fieldtype": "Small Text",
+   "label": "Address and Contact details",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_6",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "item_grid",
+   "fieldtype": "Table",
+   "label": "Item Grid",
+   "options": "Preparation Item Grid"
+  },
+  {
+   "fieldname": "section_break_8",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "storage_details",
+   "fieldtype": "Table",
+   "label": "Storage Details",
+   "options": "Preparation Storage Details"
+  },
+  {
+   "fetch_from": "customer.customer_warehouse",
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Preparation Order Note",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "delivery_request",
+   "fieldtype": "Link",
+   "label": "Delivery Request",
+   "options": "Delivery Request",
+   "read_only": 1
+  },
+  {
+   "fieldname": "update_storage",
+   "fieldtype": "Button",
+   "label": "Update Storage"
+  },
+  {
+   "fieldname": "tem",
+   "fieldtype": "Table",
+   "label": "Tem",
+   "options": "Preparation tem",
+   "read_only": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "requested_date",
+   "fieldtype": "Date",
+   "label": "Requested Date"
+  },
+  {
+   "fieldname": "customer_address_and_contact_section",
+   "fieldtype": "Section Break",
+   "label": "Customer Address and Contact"
+  },
+  {
+   "fieldname": "customer_primary_address",
+   "fieldtype": "Link",
+   "label": "Customer Primary Address",
+   "options": "Address",
+   "read_only": 1
+  },
+  {
+   "fieldname": "primary_address",
+   "fieldtype": "Read Only",
+   "label": "Primary Address"
+  },
+  {
+   "fieldname": "column_break_11",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "contact_person",
+   "fieldtype": "Link",
+   "label": "Contact Person",
+   "options": "Contact",
+   "read_only": 1
+  },
+  {
+   "fieldname": "mobile_no",
+   "fieldtype": "Read Only",
+   "label": "Mobile No"
+  },
+  {
+   "fieldname": "email_id",
+   "fieldtype": "Read Only",
+   "label": "Email Id"
+  },
+  {
+   "fieldname": "sub_customer_address_and_contact_section",
+   "fieldtype": "Section Break",
+   "label": "Sub Customer Address and Contact"
+  },
+  {
+   "fieldname": "column_break_17",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "contact_person_email_id",
+   "fieldtype": "Data",
+   "label": "Contact Person Email ID",
+   "options": "Email",
+   "read_only": 1
+  },
+  {
+   "fieldname": "contact_person_phone",
+   "fieldtype": "Data",
+   "label": "Contact Person Phone",
+   "options": "Phone",
+   "read_only": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "PON.#####"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "order_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Order Status",
+   "options": "Draft\nTo make Delivery Note\nCompleted\nCancelled",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_quantity",
+   "fieldtype": "Float",
+   "label": "Total Quantity"
+  },
+  {
+   "fieldname": "total_delivery_quantity",
+   "fieldtype": "Float",
+   "label": "Total Delivery Quantity"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2023-09-26 10:53:59.550794",
+ "modified_by": "Administrator",
+ "module": "Semah",
+ "name": "Preparation Order Note",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

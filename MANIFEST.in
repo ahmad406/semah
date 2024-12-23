@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include semah *.css
+recursive-include semah *.csv
+recursive-include semah *.html
+recursive-include semah *.ico
+recursive-include semah *.js
+recursive-include semah *.json
+recursive-include semah *.md
+recursive-include semah *.png
+recursive-include semah *.py
+recursive-include semah *.svg
+recursive-include semah *.txt
+recursive-exclude semah *.pyc

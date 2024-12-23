@@ -1,0 +1,182 @@
+{
+ "actions": [],
+ "creation": "2022-03-31 09:56:07.666943",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item",
+  "warehouse",
+  "batch_no",
+  "expiry_date",
+  "bin_location_name",
+  "stored_qty",
+  "delivery_qty",
+  "total",
+  "qty_required",
+  "section_break_8",
+  "manufacture_date",
+  "stored_in",
+  "area_used",
+  "height",
+  "width",
+  "length",
+  "item_name",
+  "description",
+  "uom",
+  "required_date",
+  "sub_customer"
+ ],
+ "fields": [
+  {
+   "columns": 2,
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "columns": 2,
+   "fieldname": "bin_location_name",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Bin Location Name"
+  },
+  {
+   "columns": 1,
+   "fieldname": "batch_no",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Batch No",
+   "options": "Batch"
+  },
+  {
+   "columns": 1,
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item",
+   "options": "Item"
+  },
+  {
+   "columns": 2,
+   "fieldname": "delivery_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Delivery Qty"
+  },
+  {
+   "columns": 1,
+   "fetch_from": "batch_no.expiry_date",
+   "fieldname": "expiry_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Expiry Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "batch_no.manufacturing_date",
+   "fieldname": "manufacture_date",
+   "fieldtype": "Date",
+   "label": "Manufacture date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "stored_in",
+   "fieldtype": "Data",
+   "label": "Stored in ",
+   "read_only": 1
+  },
+  {
+   "fieldname": "area_used",
+   "fieldtype": "Float",
+   "label": "Area used",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.stored_in==\"CBM\"",
+   "fieldname": "height",
+   "fieldtype": "Float",
+   "label": "Height",
+   "read_only": 1
+  },
+  {
+   "fieldname": "width",
+   "fieldtype": "Float",
+   "label": "Width",
+   "read_only": 1
+  },
+  {
+   "fieldname": "length",
+   "fieldtype": "Float",
+   "label": "length",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total",
+   "fieldtype": "Float",
+   "hidden": 1,
+   "label": "Total"
+  },
+  {
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "label": "item name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "label": "description",
+   "read_only": 1
+  },
+  {
+   "fieldname": "uom",
+   "fieldtype": "Data",
+   "label": "UOM"
+  },
+  {
+   "fieldname": "required_date",
+   "fieldtype": "Data",
+   "label": "Required Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "qty_required",
+   "fieldtype": "Float",
+   "label": "Qty required",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "stored_qty",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Stored Qty",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sub_customer",
+   "fieldtype": "Data",
+   "label": "Sub Customer",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2022-07-14 10:28:07.235208",
+ "modified_by": "Administrator",
+ "module": "Semah",
+ "name": "Preparation Storage Details",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
