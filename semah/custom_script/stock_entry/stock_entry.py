@@ -54,6 +54,8 @@ class CustomStockEntry(StockEntry):
         self.validate_putaway_capacity()
         self.calculate_total_qty()
 
+    
+
     @frappe.whitelist()
     def calculate_total_qty(self):
         ttl_qty=0
@@ -251,241 +253,171 @@ class CustomStockEntry(StockEntry):
             {'reference_name': self.name, 'reference_doctype': self.doctype}):
             frappe.db.set_value('Batch',data.name, 'reference_name', None)
             frappe.delete_doc("Batch", data.name,force=1)
+
     @frappe.whitelist()
     def before_cancel(self):
-        if self.stock_entry_type == 'Material Receipt':
-            for s in self.get('storage_details'):
-                if s.batch_no:
-                    item=frappe.get_doc("Item",s.item_code)
-                    for i in item.bin:
-                        if s.batch_no:
-                            if s.expiry:
-                                if i.bin_location==s.bin_location and i.warehouse==s.t_ware_house and i.batch_no==s.batch_no and convert_to_string(s.expiry)==convert_to_string(i.expiry):
-                                    i.stored_qty=i.stored_qty-s.stored_qty
-                                    if not s.height:
-                                        i.area_use=s.length*s.width* i.stored_qty
-                                    if s.height:
-                                        i.area_use=s.length*s.width*s.height*i.stored_qty
-                                    break
-                            else:
-                                if i.bin_location==s.bin_location and i.warehouse==s.t_ware_house and i.batch_no==s.batch_no:
-                                    i.stored_qty=i.stored_qty-s.stored_qty
-                                    if not s.height:
-                                        i.area_use=s.length*s.width* i.stored_qty
-                                    if s.height:
-                                        i.area_use=s.length*s.width*s.height*i.stored_qty
-                                    break
-                        else:
-                            if i.bin_location==s.bin_location and i.warehouse==s.t_ware_house :
-                                    i.stored_qty=i.stored_qty-s.stored_qty
-                                    if not s.height:
-                                        i.area_use=s.length*s.width* i.stored_qty
-                                    if s.height:
-                                        i.area_use=s.length*s.width*s.height*i.stored_qty
-                                    break
-                    item.save()
+        def handle_bin(target_doc, bin_details, reduce=False):
+            """
+            Update existing bin or create a new one if it doesn't exist.
+            The 'reduce' parameter determines whether to subtract stored_qty.
+            """
+            for bin in target_doc.bin:
+                if bin.batch_no == bin_details.batch and bin.bin_location == bin_details.bin_location and bin.warehouse == bin_details.t_ware_house:
+                    # Update stored_qty and area use
+                    if reduce:
+                        bin.stored_qty -= bin_details.stored_qty
+                    else:
+                        bin.stored_qty += bin_details.stored_qty
 
+                    # Recalculate area use based on new stored_qty
+                    bin.area_use = bin_details.length * bin_details.width * (bin_details.height or 1) * bin.stored_qty
 
+                    # Prevent negative stored_qty
+                    if bin.stored_qty < 0:
+                        frappe.throw(f"Invalid operation: stored_qty cannot be negative for bin {bin.bin_location} in warehouse {bin.warehouse}.")
+                    
+                    return True
 
+            # If reducing and no match found, raise error
+            if reduce:
+                frappe.throw(f"Item Not Found: {bin_details.item_code} with batch {bin_details.batch} at location {bin_details.bin_location}.")
 
-        elif self.stock_entry_type == 'Transfer to Quarantine'  :
-            for ex in self.get('storage_details'):
-                item=frappe.get_doc("Item",ex.item_code)
-                allow_save=False
-                for i in item.bin:
-                    if i.batch_no==ex.batch_no and i.reciept==self.name:
-                        allow_save=True
-                        i.warehouse=i.t_warehouse
-                        i.bin_location=i.t_bin
-                        break
-                if allow_save:
-                    item.save()
-                else:
-                    frappe.throw("Issue in updating bin")
+            # Append a new bin if no match is found and reducing is not intended
+            new_bin = target_doc.append("bin", {})
+            new_bin.update({
+                "warehouse": bin_details.t_ware_house,
+                "bin_location": bin_details.bin_location,
+                "batch_no": bin_details.batch,
+                "expiry": bin_details.expiry,
+                "stored_qty": bin_details.stored_qty,
+                "area_use": bin_details.length * bin_details.width * (bin_details.height or 1),
+            })
+            return True
 
-                # previous=frappe.db.sql(''' update `tabitem bin location` set warehouse=t_warehouse,bin_location=t_bin
-                #  where batch_no="{0}"  and parent="{1}"  and reciept="{2}"  '''.format(ex.batch_no,ex.item_code,self.name),as_dict=True)
-        if self.stock_entry_type == 'Quarantine Item Issue to Customer':
-             for ex in self.get('storage_details'):
-                item=frappe.get_doc("Item",ex.item_code)
-                for i in item.bin:
-                    allow_save=False
-                    if i.batch_no==ex.batch_no and i.bin_location==ex.bin_location and i.warehouse==ex.t_ware_house:
-                        allow_save=True
-                        i.stored_qty=i.stored_qty+ex.stored_qty
-                        break
-                if allow_save:
-                    item.save()
-                else:
-                    frappe.throw("Issue in updating bin")
-
-
-
+        # Main logic for different stock entry types
         if self.stock_entry_type == 'Material Receipt':
             for itm in self.get('storage_details'):
                 target_doc = frappe.get_doc("Item", itm.item_code)
-                exist=False
-                for t in target_doc.bin:
-                    exist=False
-                    if itm.batch_no:
-                        if itm.expiry:
-                            if itm.batch_no==t.batch_no and t.bin_location==itm.bin_location and t.warehouse==itm.t_ware_house and convert_to_string(itm.expiry)==convert_to_string(t.expiry):
-                                t.stored_qty=t.stored_qty+itm.stored_qty
-                                t.area_use=t.area_use+itm.area_used
-                                exist=True
-                                break
-                        else:
-                            if itm.batch_no==t.batch_no and t.bin_location==itm.bin_location and t.warehouse==itm.t_ware_house :
-                                t.stored_qty=t.stored_qty+itm.stored_qty
-                                t.area_use=t.area_use+itm.area_used
-                                exist=True
-                                break
-                    else:
-                        if  t.bin_location==itm.bin_location and t.warehouse==itm.t_ware_house :
-                            t.stored_qty=t.stored_qty+itm.stored_qty
-                            t.area_use=t.area_use+itm.area_used
-                            exist=True
-                            break
-
-                if exist==False:
-                    fill_bin=target_doc.append("bin",{})
-                    fill_bin.warehouse=itm.t_ware_house
-                    fill_bin.bin_location=itm.bin_location
-                    fill_bin.batch_no=itm.batch_no
-                    fill_bin.expiry=itm.expiry
-                    fill_bin.stored_qty=itm.stored_qty
-                    fill_bin.stored_in=itm.display_stored_in
-                    fill_bin.length=itm.length
-                    fill_bin.width=itm.width
-                    fill_bin.area_use=itm.area_used
-                    fill_bin.manufacturing_date=itm.manufacture
-                    fill_bin.sub_customer=itm.sub_customer
-                    if itm.height:
-                        fill_bin.height=itm.height
+                if not handle_bin(target_doc, itm, reduce=True):  # Reduce stored_qty
+                    frappe.throw(f"Failed to handle bin for item {itm.item_code}")
                 target_doc.save()
-        elif self.stock_entry_type == 'Transfer to Quarantine'  :
-            for ex in self.get('storage_details'):
-                target_doc = frappe.get_doc("Item", ex.item_code)
-                to_update=False
-                for d in target_doc.bin:
 
-                    if d.batch_no==ex.batch_no:
-                        d.t_bin=d.bin_location
-                        d.t_warehouse=d.warehouse
-                        d.bin_location=ex.bin_location
-                        d.warehouse=ex.t_ware_house
-                        to_update=True
+        elif self.stock_entry_type == 'Transfer to Quarantine':
+            for itm in self.get('storage_details'):
+                target_doc = frappe.get_doc("Item", itm.item_code)
+                for bin in target_doc.bin:
+                    if bin.batch_no == itm.batch:
+                        bin.t_bin = bin.bin_location
+                        bin.t_warehouse = bin.warehouse
+                        bin.bin_location = itm.bin_location
+                        bin.warehouse = itm.t_ware_house
                         break
-                if to_update:
-                    target_doc.save()
                 else:
-                    frappe.throw("Item Not Found {}".format( ex.item_code))
-
-
-                
-
+                    frappe.throw(f"Item Not Found: {itm.item_code} with batch {itm.batch}.")
+                target_doc.save()
 
         elif self.stock_entry_type == 'Quarantine Item Issue to Customer':
-            for ex in self.get('storage_details'):
-                target_doc = frappe.get_doc("Item", ex.item_code)
-                to_update=False
-                for d in target_doc.bin:
-                    if d.batch_no==ex.batch_no and d.bin_location==ex.bin_location and d.warehouse==ex.t_ware_house:
-                        d.stored_qty=d.stored_qty-ex.stored_qty
-                        to_update=True
-                        break
-                if to_update:
-                    target_doc.save()
-                else:
-                    frappe.throw("Item Not Found {}".format( ex.item_code))
+            for itm in self.get('storage_details'):
+                target_doc = frappe.get_doc("Item", itm.item_code)
+                if not handle_bin(target_doc, itm, reduce=False):  # Add stored_qty
+                    frappe.throw(f"Failed to handle bin for item {itm.item_code}")
+                target_doc.save()
 
+                        
 
-
-                    
-
-   
+    
 
    
     @frappe.whitelist()
     def before_submit(self):
-        if self.stock_entry_type == 'Material Receipt':
-            for itm in self.get('storage_details'):
-                target_doc = frappe.get_doc("Item", itm.item_code)
-                exist=False
-                for t in target_doc.bin:
-                    exist=False
-                    if itm.batch_no:
-                        if itm.expiry:
-                            if itm.batch_no==t.batch_no and t.bin_location==itm.bin_location and t.warehouse==itm.t_ware_house and convert_to_string(itm.expiry)==convert_to_string(t.expiry):
-                                t.stored_qty=t.stored_qty+itm.stored_qty
-                                t.area_use=t.area_use+itm.area_used
-                                exist=True
-                                break
-                        else:
-                            if itm.batch_no==t.batch_no and t.bin_location==itm.bin_location and t.warehouse==itm.t_ware_house :
-                                t.stored_qty=t.stored_qty+itm.stored_qty
-                                t.area_use=t.area_use+itm.area_used
-                                exist=True
-                                break
-                    else:
-                        if  t.bin_location==itm.bin_location and t.warehouse==itm.t_ware_house :
-                            t.stored_qty=t.stored_qty+itm.stored_qty
-                            t.area_use=t.area_use+itm.area_used
-                            exist=True
-                            break
+        def update_or_create_bin(target_doc, bin_details, action):
+            """
+            Updates or creates a bin in the target_doc based on action.
+            Action: 'add', 'transfer', or 'reduce'
+            """
+            for bin_entry in target_doc.bin:
+                # Material Receipt: Add Quantity
+                if action == 'add':
+                    if (
+                        bin_details.batch == bin_entry.batch_no
+                        and bin_entry.bin_location == bin_details.bin_location
+                        and bin_entry.warehouse == bin_details.t_ware_house
+                        and (
+                            not bin_details.expiry
+                            or convert_to_string(bin_details.expiry) == convert_to_string(bin_entry.expiry)
+                        )
+                    ):
+                        bin_entry.stored_qty += bin_details.stored_qty
+                        bin_entry.area_use += bin_details.area_used
+                        return True
 
-                if exist==False:
-                    fill_bin=target_doc.append("bin",{})
-                    fill_bin.warehouse=itm.t_ware_house
-                    fill_bin.bin_location=itm.bin_location
-                    fill_bin.batch_no=itm.batch_no
-                    fill_bin.expiry=itm.expiry
-                    fill_bin.stored_qty=itm.stored_qty
-                    fill_bin.stored_in=itm.display_stored_in
-                    fill_bin.length=itm.length
-                    fill_bin.width=itm.width
-                    fill_bin.area_use=itm.area_used
-                    fill_bin.manufacturing_date=itm.manufacture
-                    fill_bin.sub_customer=itm.sub_customer
-                    if itm.height:
-                        fill_bin.height=itm.height
-                target_doc.save()
+                # Transfer to Quarantine: Update Location
+                elif action == 'transfer':
+                    if bin_entry.batch_no == bin_details.batch:
+                        bin_entry.t_bin = bin_entry.bin_location
+                        bin_entry.t_warehouse = bin_entry.warehouse
+                        bin_entry.bin_location = bin_details.bin_location
+                        bin_entry.warehouse = bin_details.t_ware_house
+                        bin_entry.reciept = self.name
+                        return True
 
-        elif self.stock_entry_type == 'Transfer to Quarantine'  :
-            for ex in self.get('storage_details'):
-                target_doc = frappe.get_doc("Item", ex.item_code)
-                to_update=False
-                for d in target_doc.bin:
-                    if d.batch_no==ex.batch_no:
-                        d.t_bin=d.bin_location
-                        d.t_warehouse=d.warehouse
-                        d.bin_location=ex.bin_location
-                        d.warehouse=ex.t_ware_house
-                        d.reciept=self.name
-                        to_update=True
-                        break
-                if to_update:
+                # Quarantine Item Issue to Customer: Reduce Quantity
+                elif action == 'reduce':
+                    if (
+                        bin_entry.batch_no == bin_details.batch
+                        and bin_entry.bin_location == bin_details.bin_location
+                        and bin_entry.warehouse == bin_details.t_ware_house
+                    ):
+                        bin_entry.stored_qty -= bin_details.stored_qty
+                        if bin_entry.stored_qty < 0:
+                            frappe.throw(
+                                f"Invalid operation: Negative stored_qty for bin {bin_entry.bin_location} in warehouse {bin_entry.warehouse}."
+                            )
+                        return True
 
-                    target_doc.save()
-                else:
-                    frappe.throw("Item Not Found {}".format( ex.item_code))
+            # If no match found
+            if action == 'add':
+                new_bin = target_doc.append("bin", {})
+                new_bin.update(
+                    {
+                        "warehouse": bin_details.t_ware_house,
+                        "bin_location": bin_details.bin_location,
+                        "batch_no": bin_details.batch,
+                        "expiry": bin_details.expiry,
+                        "stored_qty": bin_details.stored_qty,
+                        "stored_in": bin_details.display_stored_in,
+                        "length": bin_details.length,
+                        "width": bin_details.width,
+                        "area_use": bin_details.area_used,
+                        "manufacturing_date": bin_details.manufacture,
+                        "sub_customer": bin_details.sub_customer,
+                        "height": bin_details.height or 0,
+                    }
+                )
+                return True
+            return False
 
-                
+        for item in self.get('storage_details'):
+            target_doc = frappe.get_doc("Item", item.item_code)
 
+            if self.stock_entry_type == 'Material Receipt':
+                # Add stored_qty
+                if not update_or_create_bin(target_doc, item, action='add'):
+                    frappe.throw(f"Failed to add bin details for item {item.item_code}")
 
-        elif self.stock_entry_type == 'Quarantine Item Issue to Customer':
-            for ex in self.get('storage_details'):
-                target_doc = frappe.get_doc("Item", ex.item_code)
-                to_update=False
-                for d in target_doc.bin:
-                    if d.batch_no==ex.batch_no and d.bin_location==ex.bin_location and d.warehouse==ex.t_ware_house:
-                        d.stored_qty=d.stored_qty-ex.stored_qty
-                        to_update=True
-                        break
-                if to_update:
-                    target_doc.save()
-                else:
-                    frappe.throw("Item Not Found {}".format( ex.item_code))
+            elif self.stock_entry_type == 'Transfer to Quarantine':
+                # Transfer bin location
+                if not update_or_create_bin(target_doc, item, action='transfer'):
+                    frappe.throw(f"Item not found: {item.item_code} with batch {item.batch}")
+
+            elif self.stock_entry_type == 'Quarantine Item Issue to Customer':
+                # Reduce stored_qty
+                if not update_or_create_bin(target_doc, item, action='reduce'):
+                    frappe.throw(f"Item not found: {item.item_code} with batch {item.batch}")
+
+            # Save changes to the target document
+            target_doc.save()
+
     @frappe.whitelist()
     def updatestorage(self,bin):
         self.storage_details=[]
@@ -500,6 +432,7 @@ class CustomStockEntry(StockEntry):
             else:
                 row.t_ware_house = itm.t_warehouse
             row.batch_no=itm.batch_no
+            row.batch=itm.batch_no
             row.expiry = expiry_date if itm.batch_no else ""
             row.manufacture = manufacturing_date  if itm.batch_no else ""
             row.stored_qty = itm.qty

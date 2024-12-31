@@ -39,84 +39,80 @@ def get_item(customer):
 
 
 @frappe.whitelist()
-def before_submit(doc,method):
-    for s in doc.get('storage_details'):
-        to_update=False
-        items=frappe.get_doc("Item",s.item_code)
-        for i in items.bin:
-            if  s.batch_no:
-                if s.expiry_date:
-                    if i.batch_no== s.batch_no and i.bin_location==s.bin_location_name and s.warehouse==i.warehouse and convert_to_string(s.expiry_date)==convert_to_string(i.expiry):
-                        i.stored_qty=i.stored_qty-s.delivery_qty
-                        if not s.height:
-                            i.area_use=s.length*s.width* i.stored_qty
-                        if s.height:
-                            i.area_use=s.length*s.width*s.height* i.stored_qty
-                        to_update=True
-                        break
-                else:
-                    if i.batch_no== s.batch_no and i.bin_location==s.bin_location_name and s.warehouse==i.warehouse :
-                        i.stored_qty=i.stored_qty-s.delivery_qty
-                        if not s.height:
-                            i.area_use=s.length*s.width* i.stored_qty
-                        if s.height:
-                            i.area_use=s.length*s.width*s.height* i.stored_qty
-                        to_update=True
-                        break
-            else:
-                if  i.bin_location==s.bin_location_name and s.warehouse==i.warehouse :
-                    i.stored_qty=i.stored_qty-s.delivery_qty
-                    if not s.height:
-                        i.area_use=s.length*s.width* i.stored_qty
-                    if s.height:
-                        i.area_use=s.length*s.width*s.height* i.stored_qty
-                    to_update=True
-                    break
-        if to_update:
-            items.save()
-        else:
-            frappe.throw("Nothing to update in item {0}".format(s.item_code))
+def before_submit(doc, method):
+    def calculate_area_use(length, width, height, stored_qty):
+        """Calculate the area use based on dimensions and stored quantity."""
+        if not height:
+            return length * width * stored_qty
+        return length * width * height * stored_qty
 
+    for storage in doc.get('storage_details'):
+        to_update = False
+        item = frappe.get_doc("Item", storage.item_code)
+        
+        for bin_entry in item.bin:
+            # Match conditions
+            conditions_met = (
+                storage.batch_no == bin_entry.batch_no if storage.batch_no else True
+            ) and (
+                storage.bin_location_name == bin_entry.bin_location
+            ) and (
+                storage.warehouse == bin_entry.warehouse
+            ) and (
+                convert_to_string(storage.expiry_date) == convert_to_string(bin_entry.expiry) if storage.expiry_date else True
+            )
+
+            if conditions_met:
+                bin_entry.stored_qty -= storage.delivery_qty
+                bin_entry.area_use = calculate_area_use(
+                    storage.length, storage.width, storage.height, bin_entry.stored_qty
+                )
+                to_update = True
+                break
+        
+        if to_update:
+            item.save()
+        else:
+            frappe.throw(f"No matching bin entry found for item {storage.item_code} in storage details.")
 
 
 @frappe.whitelist()
-def before_cancel(doc,method):
-    for s in doc.get('storage_details'):
-        items=frappe.get_doc("Item",s.item_code)
-        to_update=False
-        for i in items.bin:
-            if  s.batch_no:
-                if s.expiry_date:
-                    if i.batch_no== s.batch_no and i.bin_location==s.bin_location_name and s.warehouse==i.warehouse and convert_to_string(s.expiry_date)==convert_to_string(i.expiry):
-                        i.stored_qty=i.stored_qty+s.delivery_qty
-                        if not s.height:
-                            i.area_use+=s.length*s.width* i.stored_qty
-                        if s.height:
-                            i.area_use+=s.length*s.width*s.height* i.stored_qty
-                        to_update=True
-                        break
-                else:
-                    if i.batch_no== s.batch_no and i.bin_location==s.bin_location_name and s.warehouse==i.warehouse :
-                        i.stored_qty=i.stored_qty+s.delivery_qty
-                        if not s.height:
-                            i.area_use+=s.length*s.width* i.stored_qty
-                        if s.height:
-                            i.area_use+=s.length*s.width*s.height* i.stored_qty
-                        to_update=True
-                        break
-            else:
-                if  i.bin_location==s.bin_location_name and s.warehouse==i.warehouse :
-                    i.stored_qty=i.stored_qty+s.delivery_qty
-                    if not s.height:
-                        i.area_use=s.length*s.width* i.stored_qty
-                    if s.height:
-                        i.area_use=s.length*s.width*s.height* i.stored_qty
-                    to_update=True
-                    break
+def before_cancel(doc, method):
+    def calculate_area_use(length, width, height, stored_qty):
+        """Calculate the area use based on dimensions and stored quantity."""
+        if not height:
+            return length * width * stored_qty
+        return length * width * height * stored_qty
+
+    for storage in doc.get('storage_details'):
+        to_update = False
+        item = frappe.get_doc("Item", storage.item_code)
+
+        for bin_entry in item.bin:
+            # Match conditions
+            conditions_met = (
+                storage.batch_no == bin_entry.batch_no if storage.batch_no else True
+            ) and (
+                storage.bin_location_name == bin_entry.bin_location
+            ) and (
+                storage.warehouse == bin_entry.warehouse
+            ) and (
+                convert_to_string(storage.expiry_date) == convert_to_string(bin_entry.expiry) if storage.expiry_date else True
+            )
+
+            if conditions_met:
+                bin_entry.stored_qty += storage.delivery_qty
+                bin_entry.area_use = calculate_area_use(
+                    storage.length, storage.width, storage.height, bin_entry.stored_qty
+                )
+                to_update = True
+                break
+
         if to_update:
-            items.save()
+            item.save()
         else:
-            frappe.throw("Nothing to update in item {0}".format(s.item_code))
+            frappe.throw(f"No matching bin entry found for item {storage.item_code} in storage details.")
+
 @frappe.whitelist()
 def on_cancel(doc,method):
     pass
