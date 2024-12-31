@@ -18,7 +18,8 @@
   "stored_qty",
   "area_used",
   "manufacture",
-  "item_description"
+  "item_description",
+  "batch"
  ],
  "fields": [
   {
@@ -127,12 +128,18 @@
    "fieldname": "item_description",
    "fieldtype": "Data",
    "label": "Item description"
+  },
+  {
+   "fieldname": "batch",
+   "fieldtype": "Data",
+   "label": "Batch",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2022-08-22 09:54:16.279374",
+ "modified": "2024-12-31 10:24:52.633947",
  "modified_by": "Administrator",
  "module": "Semah",
  "name": "Storage details",
