@@ -1,31 +1,31 @@
 {
  "custom_fields": [],
  "custom_perms": [],
- "doctype": "Item Barcode",
+ "doctype": "item bin location",
  "property_setters": [
   {
    "_assign": null,
    "_comments": null,
    "_liked_by": null,
    "_user_tags": null,
-   "creation": "2024-12-30 16:24:56.763337",
+   "creation": "2024-12-25 08:58:58.104434",
    "default_value": null,
-   "doc_type": "Item Barcode",
+   "doc_type": "item bin location",
    "docstatus": 0,
    "doctype_or_field": "DocField",
-   "field_name": "barcode",
+   "field_name": "sub_customer",
    "idx": 0,
-   "modified": "2024-12-30 16:24:56.763337",
+   "modified": "2022-06-11 10:17:43.646087",
    "modified_by": "Administrator",
-   "name": "Item Barcode-barcode-hidden",
+   "name": "item bin location-sub_customer-label",
    "owner": "Administrator",
    "parent": null,
    "parentfield": null,
    "parenttype": null,
-   "property": "hidden",
-   "property_type": "Check",
+   "property": "label",
+   "property_type": "Data",
    "row_name": null,
-   "value": "1"
+   "value": "Next"
   }
  ],
  "sync_on_migrate": 1
