@@ -1,0 +1,221 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2025-01-28 20:07:05.632165",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "date",
+  "customer",
+  "sub_customers",
+  "pallet_in",
+  "pallet_out",
+  "loose_pallet_out",
+  "box_in",
+  "box_preparation",
+  "boxes_loading_loose",
+  "offloading_20ft_container",
+  "offloading_40ft_container",
+  "column_break_12",
+  "kg_in",
+  "kg_out",
+  "cbm_in",
+  "cbm_out",
+  "piece_in",
+  "piece_out",
+  "pallet_wrapping",
+  "semah_wooden_pallet",
+  "over_time",
+  "awb_out",
+  "awb_in",
+  "remarks",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "default": "Today",
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "default": "0",
+   "fieldname": "pallet_in",
+   "fieldtype": "Float",
+   "label": "Pallet In"
+  },
+  {
+   "default": "0",
+   "fieldname": "pallet_out",
+   "fieldtype": "Float",
+   "label": "Pallet Out"
+  },
+  {
+   "default": "0",
+   "fieldname": "loose_pallet_out",
+   "fieldtype": "Float",
+   "label": "Loose Pallet Out"
+  },
+  {
+   "default": "0",
+   "fieldname": "box_in",
+   "fieldtype": "Float",
+   "label": "Box In"
+  },
+  {
+   "default": "0",
+   "fieldname": "box_preparation",
+   "fieldtype": "Float",
+   "label": "Box Preparation"
+  },
+  {
+   "default": "0",
+   "fieldname": "boxes_loading_loose",
+   "fieldtype": "Float",
+   "label": "Boxes Loading loose"
+  },
+  {
+   "default": "0",
+   "fieldname": "offloading_20ft_container",
+   "fieldtype": "Float",
+   "label": "Offloading 20ft Container"
+  },
+  {
+   "default": "0",
+   "fieldname": "offloading_40ft_container",
+   "fieldtype": "Float",
+   "label": "Offloading 40ft Container"
+  },
+  {
+   "default": "0",
+   "fieldname": "kg_in",
+   "fieldtype": "Float",
+   "label": "KG In"
+  },
+  {
+   "default": "0",
+   "fieldname": "kg_out",
+   "fieldtype": "Float",
+   "label": "Kg Out"
+  },
+  {
+   "default": "0",
+   "fieldname": "cbm_in",
+   "fieldtype": "Float",
+   "label": "CBM IN"
+  },
+  {
+   "default": "0",
+   "fieldname": "cbm_out",
+   "fieldtype": "Float",
+   "label": "CBM Out"
+  },
+  {
+   "default": "0",
+   "fieldname": "piece_in",
+   "fieldtype": "Float",
+   "label": "Piece In"
+  },
+  {
+   "default": "0",
+   "fieldname": "piece_out",
+   "fieldtype": "Float",
+   "label": "Piece Out"
+  },
+  {
+   "default": "0",
+   "fieldname": "pallet_wrapping",
+   "fieldtype": "Float",
+   "label": "Pallet Wrapping"
+  },
+  {
+   "default": "0",
+   "fieldname": "semah_wooden_pallet",
+   "fieldtype": "Float",
+   "label": "Semah Wooden Pallet"
+  },
+  {
+   "default": "0",
+   "fieldname": "over_time",
+   "fieldtype": "Float",
+   "label": "Over Time"
+  },
+  {
+   "default": "0",
+   "fieldname": "awb_out",
+   "fieldtype": "Float",
+   "label": "AWB OUT"
+  },
+  {
+   "default": "0",
+   "fieldname": "awb_in",
+   "fieldtype": "Float",
+   "label": "AWB IN"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Long Text",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Daily Operation Activity",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_12",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "DOA-.YYYY.-",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "DOA-.YYYY.-"
+  },
+  {
+   "fieldname": "sub_customers",
+   "fieldtype": "Select",
+   "label": "Sub Customer"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-01-29 17:29:08.691240",
+ "modified_by": "Administrator",
+ "module": "Semah",
+ "name": "Daily Operation Activity",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1,
+ "track_seen": 1,
+ "track_views": 1
+}
