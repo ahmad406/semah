@@ -12,6 +12,8 @@ class DailyOperationActivity(Document):
 			if field.fieldtype == "Float":
 				fieldname = field.fieldname
 				value = self.get(fieldname)
-				if value is not None and value <= 0:
-					frappe.throw(f"{field.label} must be greater than 0.")
+				if value is not None and value < 0:
+					field_label = self.meta.get_field(fieldname).label
+					frappe.throw(f"{field_label} must be positive")
+
 
