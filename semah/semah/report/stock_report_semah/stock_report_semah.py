@@ -21,7 +21,7 @@ def execute(filters=None):
 	# 	conditions.append(' and c.sub_customer like "%{0}%" '.format(filters.get("customer")))
 
 	sql = """				
-	 select  p.customer_ as customer,p.stock_uom,p.item_name,p.disabled,p.name as item_code,b.customer_batch_id,c.batch_no as batch,c.sub_customer,c.warehouse,p.has_batch_no,c.bin_location,c.batch_no,c.expiry,c.stored_in,c.length,c.width,c.height,c.area_use,c.stored_qty,c.manufacturing_date from `tabitem bin location` c
+	 select  p.customer_ as customer,p.stock_uom,p.item_name,p.sku,p.disabled,p.name as item_code,b.customer_batch_id,c.batch_no as batch,c.sub_customer,c.warehouse,p.has_batch_no,c.bin_location,c.batch_no,c.expiry,c.stored_in,c.length,c.width,c.height,c.area_use,c.stored_qty,c.manufacturing_date from `tabitem bin location` c
  inner join `tabItem` p on c.parent=p.name
  left join `tabBatch` b on c.batch_no=b.name where c.stored_qty >0 {0}
 	""".format(conditions)
@@ -33,7 +33,8 @@ def execute(filters=None):
 		for idx, i in enumerate(raw):
 
 			result.append({
-						"item_code":i.item_code ,
+						"item_code":i.item_code,
+						"sku":i.sku ,
 						"status" :"Disable" if i.disabled  else "Enable",
 						"item_name" :i.item_name ,
 						"uom" : i.stock_uom ,
@@ -94,6 +95,12 @@ def get_columns():
 		{
 	 		'fieldname': 'item_name',
             'label':('Item Name'),
+            'fieldtype': 'Data',
+			'width': 220
+        },
+				{
+	 		'fieldname': 'sku',
+            'label':('SKU'),
             'fieldtype': 'Data',
 			'width': 220
         },
