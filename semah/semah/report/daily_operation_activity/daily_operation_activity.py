@@ -50,6 +50,7 @@ def get_columns():
             "label": _(field.label),
             "fieldname": field.fieldname,
             "fieldtype": field.fieldtype,
+            "options": field.options,
             "width": field.width or 150  
         }
         for field in meta.fields if field.fieldname != "naming_series"
