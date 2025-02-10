@@ -77,6 +77,8 @@ def get_conditions(filters):
 		conditions=conditions+' and p.variant_of = "{0}" '.format(filters.get("variant_of"))
 	if filters.get("item_name"):
 		conditions=conditions+' and p.item_name like "%{0}%" '.format(filters.get("item_name"))
+	if filters.get("sku"):
+		conditions=conditions+' and p.sku like "%{0}%" '.format(filters.get("sku"))
 	return conditions
 
 

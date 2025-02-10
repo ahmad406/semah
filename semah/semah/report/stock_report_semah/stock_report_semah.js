@@ -18,6 +18,12 @@ frappe.query_reports["Stock Report Semah"] = {
 		
 		},
 		{
+			"fieldname":"sku",
+			"label": __("SKU"),
+			"fieldtype": "Data",
+		
+		},
+		{
 			"fieldname":"ware_house",
 			"label": __("Warehouse"),
 			"fieldtype": "Link",
