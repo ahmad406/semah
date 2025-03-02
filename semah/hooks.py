@@ -121,7 +121,7 @@ doc_events = {
 	},
 	"Item": {
 		"on_update" : "semah.custom_script.item.item.on_update",
-        # "validate" : "semah.custom_script.item.item.validate",
+        "before_validate" : "semah.custom_script.item.item.validate",
 	},
 	
 	

@@ -1,8 +1,9 @@
 
-
-
-import code
 import frappe
+
+def validate(doc, method):
+    set_item_naming(doc, method)
+
 def on_update(self,method):
     if self.has_batch_no and self.create_new_batch:
         batch_series=self.name+"-"
@@ -19,6 +20,26 @@ def subnaming(customer,sub):
     else:
         code=customer[0].customer_code
     return code
+
+
+
+
+@frappe.whitelist()
+def set_item_naming(doc, method):
+    if doc.customer_:
+        # Fetch customer code
+        customer_code = frappe.db.get_value("Customer", doc.customer_, "customer_code")
+        
+        if customer_code:
+            doc.item_naming = customer_code.upper()
+
+        # Handle sub_customer logic
+        if doc.sub_customer:
+            naming = subnaming(doc.customer_, doc.sub_customer)
+            if naming:
+                doc.item_naming = naming.upper()
+
+
 
 
 @frappe.whitelist()
