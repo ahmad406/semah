@@ -6,7 +6,7 @@ var uomlist;
 
 frappe.ui.form.on("Stock Entry", {
 
-    refresh: function(frm) {
+    refresh: function (frm) {
         calculateTotalStoredQuantity(frm);
         $('[data-fieldname="sub"]').css("display", "none");
         cur_frm.set_df_property('sub_customer', 'label', 'Sub Customer');
@@ -26,7 +26,7 @@ frappe.ui.form.on("Stock Entry", {
 
     },
 
-    sub_customer: function(frm) {
+    sub_customer: function (frm) {
         // if (cur_frm.doc.sub_customer) {
         cur_frm.set_value("sub", cur_frm.doc.sub_customer)
 
@@ -46,7 +46,7 @@ frappe.ui.form.on("Stock Entry", {
         cur_frm.refresh_fields("storage_details")
     },
 
-    onload: function(frm) {
+    onload: function (frm) {
         $('[data-fieldname="sub"]').css("display", "none");
         cur_frm.set_df_property('sub_customer', 'label', 'Sub Customer');
         if (frm.is_new()) {
@@ -55,7 +55,7 @@ frappe.ui.form.on("Stock Entry", {
         }
 
     },
-    update_item: function(frm) {
+    update_item: function (frm) {
         if (cur_frm.doc.stock_entry_type == 'Material Receipt') {
             var itms = cur_frm.doc.items
             cur_frm.set_df_property("additional_costs_section", "hidden", 1);
@@ -70,9 +70,9 @@ frappe.ui.form.on("Stock Entry", {
         }
     },
 
-    setup: function(frm) {
+    setup: function (frm) {
 
-        cur_frm.set_query("item_code", "storage_details", function(frm, cdt, cdn) {
+        cur_frm.set_query("item_code", "storage_details", function (frm, cdt, cdn) {
             // var item_not = [];
             // for (var i = 0; i < cur_frm.doc.storage_details.length; i++) {
             //     item_not.push(cur_frm.doc.storage_details[i].item_code)
@@ -96,7 +96,7 @@ frappe.ui.form.on("Stock Entry", {
         });
 
 
-        cur_frm.set_query("batch_no", "storage_details", function(frm, cdt, cdn) {
+        cur_frm.set_query("batch_no", "storage_details", function (frm, cdt, cdn) {
 
             return {
                 filters: [
@@ -106,41 +106,41 @@ frappe.ui.form.on("Stock Entry", {
             }
         });
         // cur_frm.cscript.onload = function (frm) {
-        cur_frm.set_query("uom", "items", function() {
+        cur_frm.set_query("uom", "items", function () {
             return {
 
                 filters: [
-                        ['UOM', 'name', 'in', uomlist],
-                    ]
-                    // filters: { "customer_": cur_frm.doc.customer_nm,"sub":cur_frm.doc.customer_nm }
+                    ['UOM', 'name', 'in', uomlist],
+                ]
+                // filters: { "customer_": cur_frm.doc.customer_nm,"sub":cur_frm.doc.customer_nm }
             }
 
         });
         // }
 
-        cur_frm.cscript.onload = function(frm) {
-            cur_frm.set_query("item_code", "items", function() {
+        cur_frm.cscript.onload = function (frm) {
+            cur_frm.set_query("item_code", "items", function () {
                 if (!cur_frm.doc.sub_customer) {
                     return {
 
                         filters: [
-                                ['Item', 'customer_', '=', cur_frm.doc.customer_nm],
-                            ]
-                            // filters: { "customer_": cur_frm.doc.customer_nm,"sub":cur_frm.doc.customer_nm }
+                            ['Item', 'customer_', '=', cur_frm.doc.customer_nm],
+                        ]
+                        // filters: { "customer_": cur_frm.doc.customer_nm,"sub":cur_frm.doc.customer_nm }
                     }
                 } else {
                     return {
 
                         filters: [
-                                ['Item', 'customer_', '=', cur_frm.doc.customer_nm],
-                                ["Item", "sub_customer", '=', cur_frm.doc.sub_customer]
-                            ]
-                            // filters: { "customer_": cur_frm.doc.customer_nm,"sub":cur_frm.doc.customer_nm }
+                            ['Item', 'customer_', '=', cur_frm.doc.customer_nm],
+                            ["Item", "sub_customer", '=', cur_frm.doc.sub_customer]
+                        ]
+                        // filters: { "customer_": cur_frm.doc.customer_nm,"sub":cur_frm.doc.customer_nm }
                     }
                 }
             });
         }
-        $(frm.wrapper).on('grid-row-render', function(e, grid_row) {
+        $(frm.wrapper).on('grid-row-render', function (e, grid_row) {
             if (in_list(['Storage details'], grid_row.doc.doctype)) {
                 // if (grid_row) {
                 //     if (grid_row.doc.display_stored_in == "Pallet") {
@@ -191,7 +191,7 @@ frappe.ui.form.on("Stock Entry", {
     // },
 
 
-    purpose: function(frm) {
+    purpose: function (frm) {
         if (cur_frm.doc.stock_entry_type == 'Material Receipt') {
 
 
@@ -219,29 +219,46 @@ frappe.ui.form.on("Stock Entry", {
 
     },
 
-    customer_nm: function(frm) {
+    customer_nm: function (frm) {
         if (cur_frm.doc.customer_nm) {
-            frm.trigger("options");
+            frappe.call({
+                doc: cur_frm.doc,
+                method: 'get_warehouse_of_customer',
+                freeze: true,
+                freeze_message: "fetching warehouse ... ",
+                callback: function (r, rt) {
+                    console.log(r.message,"1")
+                    if (r.message) {
+                        frm.trigger("options");
 
-            frappe.db.get_value('Customer', cur_frm.doc.customer_nm, ["customer_warehouse"])
-                .then(r => {
-                    var cust_warehouse = r.message.customer_warehouse
-                    if (cust_warehouse && !cur_frm.doc.to_warehouse && cur_frm.doc.stock_entry_type == 'Material Receipt') {
-                        cur_frm.set_value("to_warehouse", cust_warehouse)
+
+                        var cust_warehouse = r.message.customer_warehouse
+                        if (cust_warehouse && cur_frm.doc.stock_entry_type == 'Material Receipt') {
+                            cur_frm.set_value("to_warehouse", cust_warehouse)
+                        }
+                        else {
+                            cur_frm.set_value("to_warehouse", undefined)
+
+                        }
+
+                        frm.trigger("to_warehouse");
+
+
+
+
                     }
-                    // else {
-                    //     cur_frm.set_value("to_warehouse", undefined)
+                    else {
+                        cur_frm.set_value("to_warehouse", undefined)
 
-                    //     frappe.throw("assign warehouse to the customer")
-
-                    // }
-                    frm.trigger("to_warehouse");
+                    }
 
 
-                })
+
+                }
+            });
         }
     },
-    from_warehouse:function(frm){
+    from_warehouse: function (frm) {
         if (cur_frm.doc.stock_entry_type == "Quarantine Item Issue to Customer" && cur_frm.doc.from_warehouse) {
             frappe.db.get_doc('Warehouse', cur_frm.doc.from_warehouse)
                 .then(r => {
@@ -260,7 +277,7 @@ frappe.ui.form.on("Stock Entry", {
             $('[data-fieldname="t_ware_house"] .static-area').html("Source")
         }
     },
-    to_warehouse: function(frm) {
+    to_warehouse: function (frm) {
         if (cur_frm.doc.to_warehouse) {
             frappe.db.get_doc('Warehouse', cur_frm.doc.to_warehouse)
                 .then(r => {
@@ -296,11 +313,11 @@ frappe.ui.form.on("Stock Entry", {
         }
 
     },
-    options: function(frm) {
+    options: function (frm) {
         frappe.db.get_doc('Customer', cur_frm.doc.customer_nm)
             .then(r => {
                 if (r) {
-                    var sub = [" ", ];
+                    var sub = [" ",];
                     var sub_customer = r.sub_customer
                     for (var i = 0; i < sub_customer.length; i++) {
                         sub.push(sub_customer[i].sub_customer_full_name)
@@ -311,14 +328,14 @@ frappe.ui.form.on("Stock Entry", {
 
 
     },
-    before_save: function(frm) {
+    before_save: function (frm) {
         if (cur_frm.doc.storage_details) {
             var area = cur_frm.doc.storage_details
             var total = 0
             for (var i = 0; i < area.length; i++) {
                 var check_nan = isNaN(parseFloat(area[i].area_used))
-                    // if (area[i].length == 0) {
-                    //     frappe.throw("length can't be zero in row " + (i + 1))
+                // if (area[i].length == 0) {
+                //     frappe.throw("length can't be zero in row " + (i + 1))
 
                 // }
                 // if (area[i].width == 0) {
@@ -345,7 +362,7 @@ frappe.ui.form.on("Stock Entry", {
 
 
     },
-    select: function(frm, cdt, cdn) {
+    select: function (frm, cdt, cdn) {
         frappe.call({
             method: "updatestorage",
             async: false,
@@ -359,7 +376,7 @@ frappe.ui.form.on("Stock Entry", {
     },
 
 
-    cal_areaused: function(frm) {
+    cal_areaused: function (frm) {
         if (cur_frm.doc.storage_details) {
             var area = cur_frm.doc.storage_details
             var total = 0
@@ -408,7 +425,7 @@ frappe.ui.form.on("Stock Entry", {
 //     },
 // })
 frappe.ui.form.on('Stock Entry Detail', {
-    item_code: function(frm, cdt, cdn) {
+    item_code: function (frm, cdt, cdn) {
         var child = locals[cdt][cdn];
         if (cur_frm.doc.stock_entry_type == 'Material Receipt') {
             cur_frm.doc.items[child.idx - 1].allow_zero_valuation_rate = 1
@@ -417,7 +434,7 @@ frappe.ui.form.on('Stock Entry Detail', {
 
         var item = locals[cdt][cdn];
         let quick = frm.get_docfield("items", "batch_no");
-        quick.get_route_options_for_new_doc = function() {
+        quick.get_route_options_for_new_doc = function () {
             // if (frm.is_new()) return;
             return {
                 "item": item.item_code,
@@ -427,7 +444,7 @@ frappe.ui.form.on('Stock Entry Detail', {
             cur_frm.set_value("to_warehouse", child.t_warehouse)
         }
     },
-    items_add: function(frm) {
+    items_add: function (frm) {
         if (cur_frm.doc.stock_entry_type == 'Material Receipt') {
             $('[data-fieldname="s_warehouse"]').css("display", "none");
             $('[data-fieldname="get_stock_and_rate"]').css("display", "none");
@@ -443,7 +460,7 @@ frappe.ui.form.on('Stock Entry Detail', {
         frm.trigger("update_item");
 
     },
-    items_remove: function(frm) {
+    items_remove: function (frm) {
         frm.trigger("update_item");
     },
 
@@ -456,16 +473,16 @@ frappe.ui.form.on('Storage details', {
     //     frappe.model.set_value(cdt, cdn, "sub_customer", cur_frm.doc.sub_customer)
 
     // },
-    batch_no: function(frm, cdt, cdn) {
+    batch_no: function (frm, cdt, cdn) {
         var storage = locals[cdt][cdn]
         if (!storage.item_code) {
             frappe.throw("First add item in row " + storage.idx)
         }
         batch = storage.item_code
-            // if (storage.batch_no) {
-            //     frappe.db.get_doc('Batch', storage.batch_no)
-            //         .then(r => {
-            //             console.log(r)
+        // if (storage.batch_no) {
+        //     frappe.db.get_doc('Batch', storage.batch_no)
+        //         .then(r => {
+        //             console.log(r)
 
         //             if (storage.display_stored_in == "CBM") {
         //                 var area = parseFloat(storage.length) * parseFloat(storage.width) * parseFloat(storage.height)
@@ -479,12 +496,12 @@ frappe.ui.form.on('Storage details', {
         //         })
         // }
     },
-    item_code: function(frm, cdt, cdn) {
+    item_code: function (frm, cdt, cdn) {
         var storage = locals[cdt][cdn]
         batch = storage.item_code
 
     },
-    display_stored_in: function(frm, cdt, cdn) {
+    display_stored_in: function (frm, cdt, cdn) {
         var child = locals[cdt][cdn]
         if (child.display_stored_in == "Pallet") {
             // grid_row.storage_details[0].df.read_only = 1
@@ -501,7 +518,7 @@ frappe.ui.form.on('Storage details', {
 
     },
 
-    length: function(frm, cdt, cdn) {
+    length: function (frm, cdt, cdn) {
         var storage = locals[cdt][cdn]
         frm.trigger("cal_areaused")
         if (storage.length < 0 || storage.length == 0) {
@@ -519,7 +536,7 @@ frappe.ui.form.on('Storage details', {
         }
 
     },
-    width: function(frm, cdt, cdn) {
+    width: function (frm, cdt, cdn) {
         frm.trigger("cal_areaused")
         var storage = locals[cdt][cdn]
         if (storage.width < 0 || storage.width == 0) {
@@ -536,7 +553,7 @@ frappe.ui.form.on('Storage details', {
         }
 
     },
-    height: function(frm, cdt, cdn) {
+    height: function (frm, cdt, cdn) {
         frm.trigger("cal_areaused")
         var storage = locals[cdt][cdn]
         if (storage.height < 0 || storage.width == 0) {
@@ -558,7 +575,7 @@ frappe.ui.form.on('Storage details', {
         }
 
     },
-    stored_qty: function(frm, cdt, cdn) {
+    stored_qty: function (frm, cdt, cdn) {
         var storage = locals[cdt][cdn]
         if (storage.width && storage.height && storage.length && storage.height) {
             var area = parseFloat(storage.length) * parseFloat(storage.width) * parseFloat(storage.height) * parseFloat(storage.stored_qty)
@@ -577,7 +594,7 @@ frappe.ui.form.on('Storage details', {
 
 
 
-    storage_details_add: function(frm, cdt, cdn) {
+    storage_details_add: function (frm, cdt, cdn) {
         frappe.model.set_value(cdt, cdn, "t_ware_house", cur_frm.doc.to_warehouse)
         frappe.model.set_value(cdt, cdn, "sub_customer", cur_frm.doc.sub_customer)
         var child = locals[cdt][cdn];
@@ -616,7 +633,7 @@ frappe.ui.form.on('Storage details', {
 
 
 
-frappe.ui.form.on("Stock Entry Detail", "form_render", function(frm, cdt, cdn) {
+frappe.ui.form.on("Stock Entry Detail", "form_render", function (frm, cdt, cdn) {
     var child = locals[cdt][cdn];
     if (cur_frm.doc.stock_entry_type == 'Material Receipt') {
         cur_frm.fields_dict.items.grid.update_docfield_property("basic_rate", "hidden", 1);
@@ -632,7 +649,7 @@ frappe.ui.form.on("Stock Entry Detail", "form_render", function(frm, cdt, cdn) {
             args: {
                 'item_code': child.item_code
             },
-            callback: function(r) {
+            callback: function (r) {
                 console.log(r.message)
                 uomlist = r.message
 
@@ -648,7 +665,7 @@ frappe.ui.form.on("Stock Entry Detail", "form_render", function(frm, cdt, cdn) {
 
 
 
-frappe.ui.form.on("Storage details", "form_render", function(frm, cdt, cdn) {
+frappe.ui.form.on("Storage details", "form_render", function (frm, cdt, cdn) {
     var storage = locals[cdt][cdn];
 
     // if (storage.display_stored_in == "CBM") {
@@ -685,7 +702,7 @@ const stock_extend =
         if (item && !item.has_serial_no && !item.has_batch_no) return;
         if (frm.doc.purpose === 'Material Receipt') return;
 
-        frappe.require("assets/semah/js/utlis/serial_no_batch_selector.js", function() {
+        frappe.require("assets/semah/js/utlis/serial_no_batch_selector.js", function () {
             new erpnext.SerialNoBatchSelector({
                 frm: frm,
                 item: item,
@@ -714,29 +731,29 @@ $.extend(cur_frm.cscript,
 // });
 //  for real time 
 frappe.ui.form.on('Stock Entry Detail', {
-    qty: function(frm, cdt, cdn) {
+    qty: function (frm, cdt, cdn) {
         calculateTotalQuantity(frm);
     },
-    items_remove: function(frm, cdt, cdn) {
+    items_remove: function (frm, cdt, cdn) {
         calculateTotalQuantity(frm);
     },
 });
 
 function calculateTotalQuantity(frm) {
     var total_qty = 0;
-    $.each(frm.doc.items || [], function(i, d) {
+    $.each(frm.doc.items || [], function (i, d) {
         total_qty += flt(d.qty);
     });
     frm.set_value('total_items', total_qty);
 }
 frappe.ui.form.on('Storage details', {
-    refresh: function(frm) {
+    refresh: function (frm) {
         calculateTotalStoredQuantity(frm);
     },
-    stored_qty: function(frm, cdt, cdn) {
+    stored_qty: function (frm, cdt, cdn) {
         calculateTotalStoredQuantity(frm);
     },
-    storage_details_remove: function(frm, cdt, cdn) {
+    storage_details_remove: function (frm, cdt, cdn) {
         calculateTotalStoredQuantity(frm);
     },
 
@@ -744,7 +761,7 @@ frappe.ui.form.on('Storage details', {
 
 function calculateTotalStoredQuantity(frm) {
     var total_stored_qty = 0;
-    $.each(frm.doc.storage_details || [], function(i, d) {
+    $.each(frm.doc.storage_details || [], function (i, d) {
         total_stored_qty += flt(d.stored_qty);
     });
     console.log(total_stored_qty);
@@ -756,7 +773,7 @@ function calculateTotalStoredQuantity2() {
     // Assuming that 'cur_frm' or the necessary data is accessible globally or within this scope
     var total_stored_qty = 0;
 
-    $.each(cur_frm.doc.storage_details || [], function(i, d) {
+    $.each(cur_frm.doc.storage_details || [], function (i, d) {
         total_stored_qty += flt(d.stored_qty);
     });
 

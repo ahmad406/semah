@@ -53,8 +53,28 @@ class CustomStockEntry(StockEntry):
         self.calculate_rate_and_amount()
         self.validate_putaway_capacity()
         self.calculate_total_qty()
+    @frappe.whitelist()
+    def get_warehouse_of_customer(self):
+        sql = """select name, parent_Warehouse from `tabWarehouse` where customer="{0}" and is_stock=1""".format(self.customer_nm)
+        data = frappe.db.sql(sql, as_dict=True)
+        
+        if len(data) > 1:
+            sql_p = """select for_value from `tabUser Permission` where allow="Warehouse" and user="{0}" and is_stock_warehouse=1""".format(frappe.session.user)
+            pdata = frappe.db.sql(sql_p, as_dict=True)
+            
+            if not pdata:
+                return None
+            
+            for d in data:
+                if d.parent_Warehouse == pdata[0].for_value:
+                    return {"customer_warehouse":  d.name}
+        
+                    
+        elif data:
+            return  {"customer_warehouse":  data[0].name}
+        
+        return None
 
-    
 
     @frappe.whitelist()
     def calculate_total_qty(self):
