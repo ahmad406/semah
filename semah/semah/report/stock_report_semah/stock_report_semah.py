@@ -95,21 +95,42 @@ def get_columns():
 			'width': 170
         },
 		{
-	 		'fieldname': 'item_name',
-            'label':('Item Name'),
-            'fieldtype': 'Data',
-			'width': 220
-        },
-				{
 	 		'fieldname': 'sku',
             'label':('SKU'),
             'fieldtype': 'Data',
 			'width': 220
         },
-        {
-            'fieldname': "status",
-            'label': ('Status'),
+		{
+	 		'fieldname': 'item_name',
+            'label':('Item Name'),
             'fieldtype': 'Data',
+			'width': 220
+        },
+			{
+			'label': _('Batch'),
+			'fieldname': "batch",
+			'fieldtype': 'Data',
+			'width': 120,
+	
+		},
+			{
+			'label': _('Manufacturing Date'),
+			'fieldname':"menufac_date",
+			'fieldtype': 'Date',
+			'width': 120
+		},
+		{
+			'fieldname':"exp_date",
+            'label': ('Expiry Date'),
+            'fieldtype': 'Date',
+			'width':160
+
+		},
+		{
+	 		'fieldname': "stored_qty" ,
+            'label':('Stored Qty'),
+            'fieldtype': 'Float',
+			'width': 200
         },
 		{
 			'label': _('Default unit of measurement'),
@@ -117,6 +138,7 @@ def get_columns():
 			'fieldtype': 'Data',
 			'width': 120
 		},
+      
 		{
 			'label': _('Item Belong to'),
 			'fieldname':  "item_belong",
@@ -124,18 +146,14 @@ def get_columns():
 			'options': 'Customer',
 			'width': 120
 		},
-			{
-			'label': _('Has Batch No'),
-			'fieldname':"has_batch",
-			'fieldtype': 'Check',
-			'width': 120
-		},
+		
 		{
 			'label': _('Sub Customer'),
 			'fieldname': "sub_customer",
 			'fieldtype': 'Data',
 			'width': 120
 		},
+		 
 			{
 			'label': _('Warehouse'),
 			'fieldname': "warehouse",
@@ -149,41 +167,6 @@ def get_columns():
 			'fieldtype': 'Data',
 			'width': 150,
 		},
-		{
-			'label': _('Batch'),
-			'fieldname': "batch",
-			'fieldtype': 'Data',
-			'width': 120,
-	
-		},
-		{
-			'label': _('Manufacturing Date'),
-			'fieldname':"menufac_date",
-			'fieldtype': 'Date',
-			'width': 120
-		},
-		{
-			'fieldname':"exp_date",
-            'label': ('Expiry Date'),
-            'fieldtype': 'Date',
-			'width':160
-
-		},
-		
-		{
-	 		'fieldname': "stored_qty" ,
-            'label':('Stored Qty'),
-            'fieldtype': 'Float',
-			'width': 200
-        },
-		  {
-            'fieldname': "stored_in",
-            'label': ('Stored in'),
-            'fieldtype': 'Data',
-			'width': 120
-
-        },
-
 		{
 	 		'fieldname': "length",
             'label':('Length'),
@@ -207,7 +190,26 @@ def get_columns():
             'label':('Area used'),
             'fieldtype': 'Float',
 			'width': 120
-        }
+        },
+		#  {
+        #     'fieldname': "status",
+        #     'label': ('Status'),
+        #     'fieldtype': 'Data',
+        # },
+		# {
+		# 	'label': _('Has Batch No'),
+		# 	'fieldname':"has_batch",
+		# 	'fieldtype': 'Check',
+		# 	'width': 120
+		# },
+		#   {
+        #     'fieldname': "stored_in",
+        #     'label': ('Stored in'),
+        #     'fieldtype': 'Data',
+		# 	'width': 120
+
+        # },
+
 	]
 
 
