@@ -21,6 +21,10 @@ frappe.ui.form.on("Stock Entry", {
             cur_frm.set_df_property("value_difference", "hidden", 1);
 
         }
+        if (cur_frm.doc.docstatus!=1){
+            frm.page.wrapper.find('use[href="#icon-printer"]').closest("button").hide();
+
+        }
 
 
 

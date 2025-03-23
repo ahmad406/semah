@@ -27,6 +27,10 @@ frappe.ui.form.on("Delivery Note", {
                 // }) 
 
             }, __("Get Items From"));
+            if (cur_frm.doc.docstatus!=1){
+                frm.page.wrapper.find('use[href="#icon-printer"]').closest("button").hide();
+    
+            }
 
     },
     onload: function (frm) {

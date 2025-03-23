@@ -276,6 +276,35 @@ class CustomStockEntry(StockEntry):
 
     @frappe.whitelist()
     def before_cancel(self):
+        def revert_bin_location(target_doc, bin_details):
+            """
+            Reverts bin location and warehouse back to original values stored in t_bin and t_warehouse.
+            """
+            for bin_entry in target_doc.bin:
+                if (
+                    bin_entry.batch_no == bin_details.batch
+                    and bin_entry.bin_location == bin_details.bin_location
+                    and bin_entry.warehouse == bin_details.t_ware_house
+                ):  
+                    # Check if previous values exist before restoring
+                    if not bin_entry.t_bin or not bin_entry.t_warehouse:
+                        frappe.throw(f"Cannot revert: Original bin/warehouse not stored for {bin_details.item_code}.")
+
+                    frappe.errprint([bin_entry.bin_location,bin_entry.warehouse,bin_entry.t_bin,bin_entry.t_warehouse])
+                    bin_entry.bin_location = bin_entry.t_bin
+                    bin_entry.warehouse = bin_entry.t_warehouse
+                
+                    # Clear temporary fields after restoring
+                    bin_entry.t_bin = None
+                    bin_entry.t_warehouse = None
+                    frappe.errprint([bin_entry.bin_location,bin_entry.warehouse,bin_entry.t_bin,bin_entry.t_warehouse])
+                    
+                    return True
+        
+            # If no match is found, throw an error
+            frappe.throw(f"Item not found for reverting: {bin_details.item_code} with batch {bin_details.batch}")
+
+
         def handle_bin(target_doc, bin_details, reduce=False):
             """
             Update existing bin or create a new one if it doesn't exist.
@@ -325,16 +354,12 @@ class CustomStockEntry(StockEntry):
         elif self.stock_entry_type == 'Transfer to Quarantine':
             for itm in self.get('storage_details'):
                 target_doc = frappe.get_doc("Item", itm.item_code)
-                for bin in target_doc.bin:
-                    if bin.batch_no == itm.batch:
-                        bin.t_bin = bin.bin_location
-                        bin.t_warehouse = bin.warehouse
-                        bin.bin_location = itm.bin_location
-                        bin.warehouse = itm.t_ware_house
-                        break
-                else:
-                    frappe.throw(f"Item Not Found: {itm.item_code} with batch {itm.batch}.")
+                if not revert_bin_location(target_doc, itm):
+                    frappe.throw(f"Failed to revert bin for item {itm.item_code}")
+                # frappe.throw("no")
+                
                 target_doc.save()
+
 
         elif self.stock_entry_type == 'Quarantine Item Issue to Customer':
             for itm in self.get('storage_details'):

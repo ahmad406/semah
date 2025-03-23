@@ -44,6 +44,10 @@ frappe.ui.form.on('Preparation Order Note', {
             frm.trigger("customer")
 
         }
+        if (cur_frm.doc.docstatus!=1){
+            frm.page.wrapper.find('use[href="#icon-printer"]').closest("button").hide();
+
+        }
         cur_frm.get_field("item_grid").grid.cannot_add_rows = true
         cur_frm.fields_dict["item_grid"].grid.remove_rows_button.hide()
         cur_frm.fields_dict["item_grid"].grid.refresh();

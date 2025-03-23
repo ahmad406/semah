@@ -148,6 +148,10 @@ frappe.ui.form.on('Delivery Request', {
         if (cur_frm.doc.docstatus == 0) {
             cur_frm.doc.doc_status = "Draft"
         }
+        if (cur_frm.doc.docstatus!=1){
+            frm.page.wrapper.find('use[href="#icon-printer"]').closest("button").hide();
+
+        }
         // if(cur_frm.doc.docstatus==2)
         // {
         //     cur_frm.doc.doc_status="Cancelled"
