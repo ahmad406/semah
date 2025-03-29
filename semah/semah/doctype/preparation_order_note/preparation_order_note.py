@@ -30,15 +30,28 @@ def get_delivery_request(customer):
 	data=frappe.db.sql("""select dr.name,dr.customer  from `tabDelivery Request` as dr 
 	 where dr.customer="{0}"  and dr.docstatus=1 and dr.doc_status="To make Preparation Order" order by dr.creation  desc """.format(customer),as_dict=True)
 	return data
+
 @frappe.whitelist()
 def get_bin(item,batch,warehouse):
-	data=frappe.db.sql(""" select bin_location from `tabitem bin location` where parent="{0}"  and batch_no="{1}" and warehouse="{2}" """.format(item,batch,warehouse),as_dict=True)
-	# frappe.errprint("""select bin_location from `tabitem bin location` where parent="{0}"  and batch_no="{1}" and warehouse="{3}" """.format(item,batch,warehouse))
-	lst=[" "]
+	item_escaped = frappe.db.escape(item)
+	batch_escaped = frappe.db.escape(batch)
+	warehouse_escaped = frappe.db.escape(warehouse)
+
+	data = frappe.db.sql(
+		"""SELECT bin_location 
+		   FROM `tabitem bin location` 
+		   WHERE parent = {0} 
+		   AND batch_no = {1} 
+		   AND warehouse = {2}"""
+		.format(item_escaped, batch_escaped, warehouse_escaped),
+		as_dict=True
+	)
+
+	lst = [" "]
 	for d in data:
 		lst.append(d.bin_location)
-	
 	return lst
+	
 @frappe.whitelist()
 def update_row(item,batch,warehouse,bin_location_name):
 	data=frappe.db.sql(""" select stored_qty,stored_in,length,height,width,area_use,sub_customer from `tabitem bin location` where parent="{0}"  and batch_no="{1}" and warehouse="{2}" and bin_location='{3}' """.format(item,batch,warehouse,bin_location_name),as_dict=True)
