@@ -5,6 +5,7 @@ import frappe
 import json
 from frappe import _
 import re
+from frappe.utils import today
 
 def execute(filters=None):
 	if not filters:
@@ -33,6 +34,7 @@ def execute(filters=None):
 		for idx, i in enumerate(raw):
 
 			result.append({
+						"current_date": today(),
 						"item_code":i.item_code,
 						"sku":i.sku ,
 						"status" :"Disable" if i.disabled  else "Enable",
@@ -87,6 +89,12 @@ def get_columns():
 	columns=[]
 
 	columns+= [
+			{
+	 		'fieldname': 'current_date',
+            'label':('Date'),
+            'fieldtype': 'Date',
+			'width': 140
+        },
 		{
 	 		'fieldname': 'item_code',
             'label':('Item code'),
