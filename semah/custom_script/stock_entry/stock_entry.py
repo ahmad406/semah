@@ -471,6 +471,8 @@ class CustomStockEntry(StockEntry):
                 expiry_date, manufacturing_date = frappe.db.get_value('Batch',itm.batch_no, ['expiry_date', 'manufacturing_date'])
             row=self.append("storage_details",{})
             row.item_code = itm.item_code
+            row.item_name = itm.item_name
+
             row.sub_customer = self.sub_customer
             if self.stock_entry_type=="Quarantine Item Issue to Customer":
                  row.t_ware_house = itm.s_warehouse

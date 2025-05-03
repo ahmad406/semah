@@ -237,12 +237,15 @@ frappe.ui.form.on("Stock Entry", {
 
 
                         var cust_warehouse = r.message.customer_warehouse
-                        if (cust_warehouse && cur_frm.doc.stock_entry_type == 'Material Receipt') {
-                            cur_frm.set_value("to_warehouse", cust_warehouse)
-                        }
-                        else {
-                            cur_frm.set_value("to_warehouse", undefined)
+                        if (cur_frm.doc.docstatus==0){
 
+                            if (cust_warehouse && cur_frm.doc.stock_entry_type == 'Material Receipt' ) {
+                                cur_frm.set_value("to_warehouse", cust_warehouse)
+                            }
+                            else {
+                                cur_frm.set_value("to_warehouse", undefined)
+                                
+                            }
                         }
 
                         frm.trigger("to_warehouse");
@@ -252,8 +255,9 @@ frappe.ui.form.on("Stock Entry", {
 
                     }
                     else {
+                        if (cur_frm.doc.docstatus==0){
                         cur_frm.set_value("to_warehouse", undefined)
-
+                        }
                     }
 
 
@@ -444,7 +448,7 @@ frappe.ui.form.on('Stock Entry Detail', {
                 "item": item.item_code,
             }
         }
-        if (cur_frm.doc.stock_entry_type == 'Transfer to Quarantine' && child.t_warehouse && child.idx == 1 && !cur_frm.doc.to_warehouse) {
+        if (cur_frm.doc.stock_entry_type == 'Transfer to Quarantine' && child.t_warehouse && child.idx == 1 && !cur_frm.doc.to_warehouse && cur_frm.doc.docstatus==0) {
             cur_frm.set_value("to_warehouse", child.t_warehouse)
         }
     },

@@ -14,7 +14,7 @@ app_license = "MIT"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/semah/css/semah.css"
-# app_include_js = "/assets/semah/js/semah.js"
+app_include_js = "/assets/semah/js/comman.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/semah/css/semah.css"

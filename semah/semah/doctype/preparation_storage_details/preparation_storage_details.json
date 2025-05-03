@@ -126,6 +126,7 @@
   {
    "fieldname": "item_name",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "item name",
    "read_only": 1
   },
@@ -170,7 +171,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2022-07-14 10:28:07.235208",
+ "modified": "2025-05-03 16:32:59.104835",
  "modified_by": "Administrator",
  "module": "Semah",
  "name": "Preparation Storage Details",

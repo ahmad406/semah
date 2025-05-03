@@ -53,10 +53,13 @@ frappe.ui.form.on('Preparation Order Note', {
         cur_frm.fields_dict["item_grid"].grid.refresh();
 
         frm.trigger("customer")
-        frm.add_custom_button(__('Delivery Note'),
+        if(cur_frm.doc.docstatus==1){
+
+            frm.add_custom_button(__('Delivery Note'),
             function() {
                 frm.trigger("delivery_note")
             }, __('Create'));
+        }
 
         frm.add_custom_button(__('Delivery Request'),
             function() {
