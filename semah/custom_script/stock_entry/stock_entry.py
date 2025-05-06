@@ -474,6 +474,13 @@ class CustomStockEntry(StockEntry):
             row.item_name = itm.item_name
 
             row.sub_customer = self.sub_customer
+            length, width,height = frappe.db.get_value('Item',itm.item_code, ['length', 'width','heigth'])
+            row.length = length
+            row.width = width
+            row.height = height
+            
+
+
             if self.stock_entry_type=="Quarantine Item Issue to Customer":
                  row.t_ware_house = itm.s_warehouse
             else:
@@ -483,9 +490,35 @@ class CustomStockEntry(StockEntry):
             row.expiry = expiry_date if itm.batch_no else ""
             row.manufacture = manufacturing_date  if itm.batch_no else ""
             row.stored_qty = itm.qty
+            if row.width and row.height and row.length and row.stored_qty:
+                area = float(row.length) * float(row.width) * float(row.height) * float(row.stored_qty)
+                row.area_used = area
+
+
+            elif row.width and row.length and row.stored_qty and not row.height:
+                area = float(row.length) * float(row.width) * float(row.stored_qty)
+                row.area_used = area
             if len(bin) ==1:
                 row.bin_location=bin[0]
         self.calculate_total_qty()
+        self.calculate_total_area_used()
+
+
+    def calculate_total_area_used(self):
+        total = 0.0
+
+        if self.storage_details:
+            for row in self.storage_details:
+                try:
+                    area = float(row.area_used)
+                    total += area
+                except (TypeError, ValueError):
+                    # Skip if area_used is not a number
+                    continue
+
+        if total:
+            self.total_area_used = total
+
     @frappe.whitelist()
     def checkbatch(self):
         storage = self.storage_details
