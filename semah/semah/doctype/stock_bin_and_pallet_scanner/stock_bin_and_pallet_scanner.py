@@ -4,22 +4,17 @@
 import frappe
 from frappe.model.document import Document
 
-class TransferBin(Document):
-
-	def validate(self):
-		self.validate_mandatory()
-		self.check_if_prepration_order_note()
-		self.validate_transfer()
-
-
+class StockBinandPalletScanner(Document):
 	@frappe.whitelist()
 	def show_bin_info(self):
 
 		Type = ""
 		if frappe.db.exists("Bin Name", self.source_bin):
 			Type = "Bin"
+		elif frappe.db.exists("Pallet", self.source_bin):
+			Type = "Pallet"
 		else:
-			frappe.throw("Bin  not found.")
+			frappe.throw("Bin or Pallet not found.")
 		def get_bin_details(bin_name, field_prefix):
 			if field_prefix == "Bin":
 				data = frappe.db.sql("""
@@ -35,6 +30,19 @@ class TransferBin(Document):
 					limit 2
 				""".format(bin_name), as_dict=1)
 
+			elif field_prefix == "Pallet":
+				data = frappe.db.sql("""
+					select 
+						pallet, 
+						parent item_code, 
+						bin_location, 
+						stored_qty, 
+					DATE_FORMAT(expiry, '%d-%m -%Y') AS expiry, 
+						warehouse 
+					from `tabitem bin location` 
+					where pallet ="{0}" and stored_qty > 0
+					limit 2
+				""".format(bin_name), as_dict=1)
 			else:
 				return ""
 
@@ -199,54 +207,7 @@ class TransferBin(Document):
 
 		if self.source_bin:
 			data = get_bin_details(self.source_bin, Type)
-			self.set("source_det",data)
 			return data
 		else:
 			frappe.msgprint("Scan Properly")
 			return "No Show"
-
-
-	def validate_mandatory(self):
-		if not self.source_bin:
-			frappe.throw("Source Bin is missing..!")
-		if not self.target_bin:
-			frappe.throw("Target Bin is missing..!")
-		if self.target_bin==self.source_bin:
-			frappe.throw("Target and Source Bin can't be same")
-	def check_if_prepration_order_note(self):
-		sql="""select p.name from `tabPreparation Order Note` p 
-			inner join `tabPreparation Storage Details` c on p.name=c.parent 
-			where bin_location_name="{0}" 
-			and order_status='To make Delivery Note' 
-			and p.docstatus=1 """.format(self.source_bin)
-		data = frappe.db.sql(sql, as_dict=1)
-		if data:
-			frappe.throw("Preparation Order Note already created against this bin: {0}".format(data[0]['name']))
-	def validate_transfer(self):
-		target=frappe.get_doc("Bin Name",self.target_bin)
-		if target.status=="Occupied":
-			frappe.throw("Target Bin is already Occupied :{}".format(self.target_bin))
-		source=frappe.get_doc("Bin Name",self.source_bin)
-		if source.status!="Occupied":
-			frappe.throw("Source Bin is Vacant :{}".format(self.source_bin))
-
-	def on_submit(self):
-		sql="""select name from `tabitem bin location`   where bin_location = "{0}" and stored_qty > 0 """.format(self.source_bin)
-		data=frappe.db.sql(sql,as_dict=1)
-		if data:
-			if len(data)>1:
-				frappe.throw("Multiple Record Found")
-			else:
-				bn=frappe.get_doc("item bin location",data[0].name)
-				bn.db_set("bin_location",self.target_bin)
-				bin_t=frappe.get_doc("Bin Name",self.target_bin)
-				bin_t.db_set("status","Occupied")
-				bin_s=frappe.get_doc("Bin Name",self.source_bin)
-				bin_s.db_set("status","Vacant")
-
-				# frappe.db.commit()
-		else:
-			frappe.throw("Source Bin is Vacant")
-
-
-

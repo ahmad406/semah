@@ -1,13 +1,13 @@
 {
  "actions": [],
- "creation": "2022-04-21 12:52:01.707722",
+ "creation": "2022-04-05 08:26:28.258558",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "item_code",
-  "batch_no",
   "warehouse",
+  "batch_no",
   "bin_location_name",
   "manufacture_date",
   "expiry_date",
@@ -17,7 +17,6 @@
   "width",
   "length",
   "delivery_qty",
-  "sub_customer",
   "pallet"
  ],
  "fields": [
@@ -29,17 +28,18 @@
    "options": "Item"
   },
   {
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Warehouse",
+   "options": "Warehouse"
+  },
+  {
    "fieldname": "batch_no",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Batch No",
    "options": "Batch"
-  },
-  {
-   "fieldname": "warehouse",
-   "fieldtype": "Link",
-   "label": "Warehouse",
-   "options": "Warehouse"
   },
   {
    "fieldname": "bin_location_name",
@@ -59,6 +59,7 @@
    "label": " Expiry Date "
   },
   {
+   "fetch_from": "batch_no.stored_in",
    "fieldname": "stored_in",
    "fieldtype": "Data",
    "label": "Stored in "
@@ -70,17 +71,17 @@
   },
   {
    "fieldname": "height",
-   "fieldtype": "Float",
+   "fieldtype": "Data",
    "label": "height"
   },
   {
    "fieldname": "width",
-   "fieldtype": "Float",
+   "fieldtype": "Data",
    "label": "width"
   },
   {
    "fieldname": "length",
-   "fieldtype": "Float",
+   "fieldtype": "Data",
    "label": "length"
   },
   {
@@ -88,11 +89,6 @@
    "fieldtype": "Float",
    "in_list_view": 1,
    "label": " Delivery Qty "
-  },
-  {
-   "fieldname": "sub_customer",
-   "fieldtype": "Data",
-   "label": "Sub customer"
   },
   {
    "fieldname": "pallet",
@@ -104,10 +100,10 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-05-11 19:56:54.225767",
+ "modified": "2025-05-11 19:56:31.471152",
  "modified_by": "Administrator",
  "module": "Semah",
- "name": "Note Storage detail",
+ "name": "Note Storage details",
  "owner": "Administrator",
  "permissions": [],
  "sort_field": "modified",

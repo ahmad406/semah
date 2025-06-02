@@ -1,6 +1,39 @@
 import frappe
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
+from frappe.utils import  flt
+
+def on_update(self,method=None):
+    update_bin_status(self)
+
+def update_bin_status(self):
+    for itm in self.get("storage_details"):
+        if not itm.bin_location:
+            continue
+
+        bin_name = itm.bin_location
+
+        dt = frappe.db.sql("""
+            SELECT * FROM `tabitem bin location`
+            WHERE bin_location = %s AND stored_qty > 0 AND docstatus < 2
+        """, (bin_name,), as_dict=1)
+
+        if len(dt) > 1:
+            frappe.throw(f"Data Integrity Error: Multiple active entries for bin '{bin_name}' with stored_qty > 0")
+
+        if not dt:
+            frappe.db.set_value("Bin Name", bin_name, "status", "Vacant")
+        else:
+            pallet = frappe.get_doc("Pallet", dt[0].pallet)
+            stored_qty = flt(dt[0].stored_qty, 2)
+            capacity = flt(pallet.capacity, 2)
+
+            if stored_qty < capacity:
+                frappe.db.set_value("Bin Name", bin_name, "status", "Partially Occupied")
+            else:
+                frappe.db.set_value("Bin Name", bin_name, "status", "Occupied")
+
+                
 
 @frappe.whitelist()
 def on_submit(doc,method):

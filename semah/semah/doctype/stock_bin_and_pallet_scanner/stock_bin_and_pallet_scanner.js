@@ -1,35 +1,30 @@
+// Copyright (c) 2025, Dconnex and contributors
+// For license information, please see license.txt
+
 let scannerDialog = null;
 let html5QrCode = null;
 
-frappe.ui.form.on('Transfer Bin', {
+frappe.ui.form.on('Stock Bin and Pallet Scanner', {
     onload(frm) {
         if (typeof Html5Qrcode === "undefined") {
             const script = document.createElement("script");
             script.src = "https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"; // v2.3.8
-            // script.onload = () => setupClick(frm);
             script.onerror = () => frappe.msgprint('Failed to load scanner library. Please check your internet connection.');
             document.head.appendChild(script);
+            frm.disable_save();
         } 
-        // else {
-        //     setupClick(frm);
-        // }
+      
+    },
+    refresh:function(frm){
+        frm.disable_save();
     },
 
-    source: function(frm) {
-        cur_frm.set_value("source_barcode",undefined)
+    scan: function(frm) {
         showBarcodeScanner(frm, 'source_bin');
     },
-    target: function(frm) {
-        showBarcodeScanner(frm, 'target_bin');
-    },
     source_bin:function(frm){
-        cur_frm.set_value("source_barcode",frm.doc.source_bin)
         frm.trigger("show_bin_details")
 
-    },
-    target_bin:function(frm){
-        cur_frm.set_value("target_barcode",frm.doc.target_bin)
-        frm.trigger("show_bin_details")
     },
     show_bin_details:function(frm){
         frappe.call({
@@ -39,10 +34,10 @@ frappe.ui.form.on('Transfer Bin', {
                 if (r.message) {
                     
                     if (r.message=="No Show"){
-                        frm.set_df_property('source_detail', 'options', r.message); 
+                        frm.set_df_property('show_detaiil', 'options', r.message); 
                     }
                     else{
-                        frm.set_df_property('source_detail', 'options', r.message); 
+                        frm.set_df_property('show_detaiil', 'options', r.message); 
                     }
                  
                    cur_frm.refresh()
@@ -52,6 +47,15 @@ frappe.ui.form.on('Transfer Bin', {
 
     }
 });
+
+// function setupClick(frm) {
+//     const field = frm.fields_dict['source_bin'];
+//     if (field?.input) {
+//         field.input.onclick = function () {
+//             showBarcodeScanner(frm, 'source_bin');
+//         };
+//     }
+// }
 
 async function cleanupScanner() {
     if (html5QrCode) {

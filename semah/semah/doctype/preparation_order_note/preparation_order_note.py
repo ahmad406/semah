@@ -8,10 +8,14 @@ from frappe import _
 from frappe.model.mapper import get_mapped_doc
 from frappe.model.document import Document
 
+from collections import defaultdict
+from frappe.utils import flt
+
 class PreparationOrderNote(Document):
 	def on_submit(self):
 		frappe.db.sql("""update  `tabDelivery Request` set doc_status="To Make Delivery Note"
 		where name="{0}" """.format(self.delivery_request))
+		self.validate_scanned()
 
 	def on_cancel(self):
 		frappe.db.sql("""update  `tabPreparation Order Note` set order_status="Cancelled"
@@ -24,6 +28,163 @@ class PreparationOrderNote(Document):
 					s.required_date	=i.required_date
 					s.item_name	=i.item_name
 					s.description	=i.item_description
+		self.validate_duplicate_bin_locations()
+		self.validate_required_item()
+
+
+
+
+	def validate_scanned(self):
+		scanned_map = defaultdict(float)
+		for d in self.scanned_items:
+			key = (d.item, d.pallet)
+			scanned_map[key] += flt(d.delivery_qty)
+
+		storage_map = defaultdict(float)
+		for d in self.storage_details:
+			key = (d.item, d.pallet)
+			storage_map[key] += flt(d.delivery_qty)
+
+		for key in storage_map:
+			if key not in scanned_map:
+				frappe.throw(f"Item {key[0]} Pallet {key[1]} exists in Storage but not in Scanned Items.")
+
+			if flt(scanned_map[key]) != flt(storage_map[key]):
+				frappe.throw(f"Mismatch in Delivery Qty for Item {key[0]}, Pallet {key[1]}: "
+							f"Scanned = {scanned_map[key]}, Storage = {storage_map[key]}")
+
+		for key in scanned_map:
+			if key not in storage_map:
+				frappe.throw(f"Item {key[0]} Pallet {key[1]} exists in Scanned but not in Storage.")
+
+
+	def validate_required_item(self):
+		item_list = {d.item_code for d in self.item_grid}
+
+		for row in self.storage_details:
+			if row.item not in item_list:
+				frappe.throw(
+					_("Item <b>{0}</b> in Storage Details is not listed in Item Grid.").format(row.item),
+					title=_("Validation Error")
+				)
+
+
+	
+	def validate_duplicate_bin_locations(self):
+		"""Validate that there are no duplicate bin_location_name values in the storage_details table."""
+
+		bin_set = set()
+		for row in self.storage_details:
+			bin_name = (row.bin_location_name or "").strip().lower()
+
+			if bin_name in bin_set:
+				frappe.throw(
+					_("Duplicate Bin Location found: {0}").format(row.bin_location_name),
+					title=_("Validation Error")
+				)
+			if bin_name:
+				bin_set.add(bin_name)
+
+
+	@frappe.whitelist()
+	def add_item_in_storage(self,insert=None):
+		self.source_bin = self.barcode
+		Type = ""
+
+		if frappe.db.exists("Bin Name", self.source_bin):
+			Type = "Bin"
+		elif frappe.db.exists("Pallet", self.source_bin):
+			Type = "Pallet"
+		else:
+			frappe.throw("Bin or Pallet not found.")
+
+		def get_bin_details(bin_name, field_prefix):
+			if field_prefix == "Bin":
+				data = frappe.db.sql("""
+					SELECT
+						p.stock_uom, p.item_name,p.description,
+						p.name AS item_code,c.batch_no AS batch, c.warehouse,
+						c.bin_location, c.expiry, c.stored_in, c.length, c.width, c.height,
+						c.area_use, c.stored_qty, c.manufacturing_date, c.pallet
+					FROM `tabitem bin location` c
+					INNER JOIN `tabItem` p ON c.parent = p.name
+					
+					WHERE c.stored_qty > 0 AND c.bin_location = %s
+					LIMIT 2
+				""", (bin_name,), as_dict=1)
+
+			elif field_prefix == "Pallet":
+				data = frappe.db.sql("""
+					SELECT
+						p.stock_uom, p.item_name,p.description,
+						p.name AS item_code,c.batch_no AS batch, c.warehouse,
+						c.bin_location, c.expiry, c.stored_in, c.length, c.width, c.height,
+						c.area_use, c.stored_qty, c.manufacturing_date, c.pallet
+					FROM `tabitem bin location` c
+					INNER JOIN `tabItem` p ON c.parent = p.name
+					
+					WHERE c.stored_qty > 0  AND c.pallet = %s
+					LIMIT 2
+				""", (bin_name,), as_dict=1)
+
+			else:
+				frappe.throw("Invalid field prefix for Bin or Pallet.")
+
+			if not data:
+				frappe.throw("No records found in the Bin or Pallet.")
+
+			if len(data) > 1:
+				frappe.throw(f"Multiple records found for {field_prefix} {bin_name}")
+
+			return data[0]
+
+		if self.source_bin:
+			data = get_bin_details(self.source_bin, Type)
+		
+			if insert:
+				if not self.qty:
+					frappe.throw("Qty Required!")
+				# item = frappe.get_doc('Item', data['item_code'])
+
+				row = self.append("scanned_items", {})
+				row.item = data.get("item_code")
+				row.item_name = data.get("item_name")
+				row.uom = data.get("stock_uom")
+				row.bin_location_name = data.get("bin_location")
+				row.pallet = data.get("pallet")
+				row.stored_qty = data.get("stored_qty")
+				row.delivery_qty =self.qty
+				if row.delivery_qty > row.stored_qty:
+					frappe.throw("Deliver QTY cannot be more than  stored qty")
+				row.expiry_date = data.get("expiry")
+				row.manufacture_date = data.get("manufacturing_date")
+				row.width = data.get("width")
+				row.length = data.get("length")
+				row.warehouse = data.get("warehouse")
+
+				row.batch_no = data.get("batch")
+
+				req_item = get_required_qty(self, data.get("item_code"))
+				row.item_description = data.get("description")
+				row.qty_required = req_item.qty_required if req_item else 0
+				self.qty=0
+				self.barcode=None
+			else:
+				self.qty=data.get("stored_qty")
+
+
+			return data
+		else:
+			frappe.msgprint("Scan properly.")
+			return "No Show"
+
+def get_required_qty(self, item):
+    for d in self.item_grid:
+        if d.item_code == item:
+            return d
+    frappe.throw("Scanned item is not in the required items list!")
+
+
 
 @frappe.whitelist()
 def get_delivery_request(customer):
@@ -118,6 +279,7 @@ def make_delivery_note(source_name, target_doc=None):
 				"width": "width",
 				"length":"length",
 				"sub_customer":"sub_customer",
+				"pallet":"pallet",
 
 			}
 		}
@@ -156,7 +318,8 @@ def get_item(source_name, target_doc=None):
 				"bin_location_name": "bin_location_name",
 				"batch_no": "batch_no",
 				"expiry_date":"expiry_date",
-				"delivery_qty": "delivery_qty"
+				"delivery_qty": "delivery_qty",
+				"pallet":"pallet"
 			}
 		}
 	}, target_doc, set_missing_values)

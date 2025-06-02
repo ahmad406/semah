@@ -31,6 +31,13 @@ frappe.query_reports["Stock Report Semah"] = {
 		
 		},
 		{
+			"fieldname":"pallet",
+			"label": __("Pallet"),
+			"fieldtype": "Link",
+			"options":'Pallet',
+		
+		},
+		{
 			"fieldname":"variant_of",
 			"label": __("Variant of"),
 			"fieldtype": "Link",

@@ -9,6 +9,7 @@
   "source_bin",
   "source",
   "source_detail",
+  "source_det",
   "source_barcode",
   "column_break_4",
   "target_bin",
@@ -20,10 +21,11 @@
  "fields": [
   {
    "fieldname": "source_bin",
-   "fieldtype": "Data",
-   "hidden": 1,
+   "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Source Bin"
+   "label": "Source Bin",
+   "options": "Bin Name",
+   "reqd": 1
   },
   {
    "fieldname": "amended_from",
@@ -51,9 +53,10 @@
   },
   {
    "fieldname": "target_bin",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "label": "Target Bin",
-   "read_only": 1
+   "options": "Bin Name",
+   "reqd": 1
   },
   {
    "fieldname": "target",
@@ -69,20 +72,27 @@
   {
    "fieldname": "target_detail",
    "fieldtype": "Text",
+   "hidden": 1,
    "label": "target Detail",
    "read_only": 1
   },
   {
    "fieldname": "source_detail",
-   "fieldtype": "Text",
+   "fieldtype": "HTML",
    "label": "Source Detail"
+  },
+  {
+   "fieldname": "source_det",
+   "fieldtype": "HTML Editor",
+   "hidden": 1,
+   "label": "Source Det"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
  "migration_hash": "d64a4618582d62fce29df99f86c831a0",
- "modified": "2025-05-11 12:25:25.208544",
+ "modified": "2025-05-22 16:28:22.684615",
  "modified_by": "Administrator",
  "module": "Semah",
  "name": "Transfer Bin",

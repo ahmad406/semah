@@ -14,7 +14,11 @@ app_license = "MIT"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/semah/css/semah.css"
-app_include_js = "/assets/semah/js/comman.js"
+app_include_js = [
+    "/assets/semah/js/comman.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"
+]
+
 
 # include js, css files in header of web template
 # web_include_css = "/assets/semah/css/semah.css"

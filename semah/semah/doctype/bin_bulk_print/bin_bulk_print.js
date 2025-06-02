@@ -1,7 +1,7 @@
 // Copyright (c) 2025, Dconnex and contributors
 // For license information, please see license.txt
 
-frappe.ui.form.on('Bin Name', {
+frappe.ui.form.on('Bin Bulk Print', {
 	setup: function (frm) {
 		frm.set_query("warehouse", function () {
 			return {
@@ -12,4 +12,16 @@ frappe.ui.form.on('Bin Name', {
 		});
 
 	},
+	warehouse:function(frm){
+
+		frappe.call({
+			method: "set_bin",
+			doc: cur_frm.doc,
+            callback: function(r) {
+				if (r.message) {
+					cur_frm.refresh()
+				}
+            }
+        });
+	}
 });

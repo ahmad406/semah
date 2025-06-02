@@ -22,7 +22,11 @@ def execute(filters=None):
 	# 	conditions.append(' and c.sub_customer like "%{0}%" '.format(filters.get("customer")))
 
 	sql = """				
-	 select  p.customer_ as customer,p.stock_uom,p.item_name,p.sku,p.disabled,p.name as item_code,b.customer_batch_id,c.batch_no as batch,c.sub_customer,c.warehouse,p.has_batch_no,c.bin_location,c.batch_no,c.expiry,c.stored_in,c.length,c.width,c.height,c.area_use,c.stored_qty,c.manufacturing_date from `tabitem bin location` c
+	 select  p.customer_ as customer,p.stock_uom,p.item_name,p.sku,p.disabled,p.name as item_code,
+	 b.customer_batch_id,c.batch_no as batch,c.sub_customer,c.warehouse,p.has_batch_no,c.bin_location,
+	 c.batch_no,c.expiry,c.stored_in,c.length,c.width,c.height,c.area_use,c.stored_qty,c.manufacturing_date,
+	 c.pallet
+	   from `tabitem bin location` c
  inner join `tabItem` p on c.parent=p.name
  left join `tabBatch` b on c.batch_no=b.name where c.stored_qty >0 {0}
 	""".format(conditions)
@@ -53,6 +57,7 @@ def execute(filters=None):
 						"length" : i.length,
 						"height" : i.height,
 						"width" : i.width,
+						"pallet" : i.pallet,
 						"area_used" :i.area_use,
 				})
 
@@ -81,6 +86,8 @@ def get_conditions(filters):
 		conditions=conditions+' and p.item_name like "%{0}%" '.format(filters.get("item_name"))
 	if filters.get("sku"):
 		conditions=conditions+' and p.sku like "%{0}%" '.format(filters.get("sku"))
+	if filters.get("pallet"):
+		conditions=conditions+' and c.pallet = "{0}" '.format(filters.get("pallet"))
 	return conditions
 
 
@@ -172,7 +179,16 @@ def get_columns():
 			{
 			'label': _('Bin Location'),
 			'fieldname': "bin_location",
-			'fieldtype': 'Data',
+			'fieldtype': 'Link',
+			'options': 'Bin Name',
+			'width': 150,
+		},
+					{
+			'label': _('Pallet'),
+			'fieldname': "pallet",
+			'fieldtype': 'Link',
+			'options': 'Pallet',
+
 			'width': 150,
 		},
 		{

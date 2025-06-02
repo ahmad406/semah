@@ -7,6 +7,7 @@
  "field_order": [
   "item",
   "warehouse",
+  "pallet",
   "batch_no",
   "expiry_date",
   "bin_location_name",
@@ -39,9 +40,10 @@
   {
    "columns": 2,
    "fieldname": "bin_location_name",
-   "fieldtype": "Select",
+   "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Bin Location Name"
+   "label": "Bin Location Name",
+   "options": "Bin Name"
   },
   {
    "columns": 1,
@@ -166,12 +168,18 @@
    "fieldtype": "Data",
    "label": "Sub Customer",
    "read_only": 1
+  },
+  {
+   "fieldname": "pallet",
+   "fieldtype": "Link",
+   "label": "Pallet",
+   "options": "Pallet"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-05-03 16:32:59.104835",
+ "modified": "2025-05-11 19:49:00.355547",
  "modified_by": "Administrator",
  "module": "Semah",
  "name": "Preparation Storage Details",
