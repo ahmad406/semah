@@ -37,6 +37,33 @@ frappe.ui.form.on('Preparation Order Note', {
     before_submit: function(frm) {
         cur_frm.doc.order_status = "To make Delivery Note"
     },
+    barcode:function(frm){
+        frappe.call({
+            method: "add_item_in_storage",
+			doc: cur_frm.doc,
+            callback: function(r) {
+                if (r.message) {
+                    cur_frm.refresh()
+                   
+                }
+            }
+        });
+
+    },
+    insert:function(frm){
+        frappe.call({
+            method: "add_item_in_storage",
+			doc: cur_frm.doc,
+            args:{"insert":true},
+            callback: function(r) {
+                if (r.message) {
+                    cur_frm.refresh()
+                   
+                }
+            }
+        });
+
+    },
     refresh: function(frm) {
         $('[data-fieldname="tem"]').css("display", "none");
         if (!frm.is_new()) {
@@ -51,6 +78,14 @@ frappe.ui.form.on('Preparation Order Note', {
         cur_frm.get_field("item_grid").grid.cannot_add_rows = true
         cur_frm.fields_dict["item_grid"].grid.remove_rows_button.hide()
         cur_frm.fields_dict["item_grid"].grid.refresh();
+        cur_frm.get_field("scanned_items").grid.cannot_add_rows=true   
+        if (frappe.user.has_role("Labour")){
+        cur_frm.fields_dict['scanned_items'].grid.wrapper.find('.grid-remove-all-rows').hide(); 
+        cur_frm.fields_dict['scanned_items'].grid.wrapper.find('.grid-remove-rows').hide();  
+        frm.fields_dict['scanned_items'].grid.wrapper.find('.grid-delete-row').hide(); 
+        frm.fields_dict['scanned_items'].grid.wrapper.find('.edit-grid-row').hide(); 
+
+        }
 
         frm.trigger("customer")
         if(cur_frm.doc.docstatus==1){
@@ -289,6 +324,7 @@ frappe.ui.form.on('Preparation Order Note', {
                             rw.warehouse = list[j].warehouse
                             rw.expiry_date = list[j].expiry
                             rw.bin_location_name = list[j].bin_location
+                            rw.pallet = list[j].pallet
                                 // rw.batch_no = list[j].batch_no
                             rw.stored_qty = list[j].stored_qty
                             rw.area_used = list[j].area_use
