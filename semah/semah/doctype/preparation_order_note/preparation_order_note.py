@@ -84,6 +84,49 @@ class PreparationOrderNote(Document):
 				)
 			if bin_name:
 				bin_set.add(bin_name)
+	@frappe.whitelist()
+	def fetch_item_details(self, row):
+		for d in self.storage_details:
+			if str(d.idx) == str(row.get("idx")):
+
+				data = frappe.db.sql("""
+					SELECT
+						p.stock_uom, p.item_name, p.description,
+						p.name AS item_code, c.batch_no AS batch, c.warehouse,
+						c.bin_location, c.expiry, c.stored_in, c.length, c.width, c.height,
+						c.area_use, c.stored_qty, c.manufacturing_date, c.pallet
+					FROM `tabitem bin location` c
+					INNER JOIN `tabItem` p ON c.parent = p.name
+					WHERE c.stored_qty > 0 AND c.bin_location = %s
+					LIMIT 1
+				""", (d.bin_location_name,), as_dict=1)
+
+				if data:
+					item = data[0]
+					d.batch_no = item.batch
+					d.item = item.item_code
+					d.item_name = item.item_name
+					d.uom = item.stock_uom
+					d.description = item.description
+					d.warehouse = item.warehouse
+					d.expiry_date = item.expiry
+					d.bin_location_name = item.bin_location
+					d.pallet = item.pallet
+					d.stored_qty = item.stored_qty
+					d.area_used = item.area_use
+					d.stored_in = item.stored_in
+					d.height = item.height
+					d.width = item.width
+					d.length = item.length
+					d.manufacture_date = item.manufacturing_date
+					d.delivery_qty=item.stored_qty
+					req_item=get_required_qty(self,item.item_code)
+					frappe.errprint(req_item.as_dict())
+					row.qty_required = req_item.get("qty_required") if req_item else 0
+
+
+					return True
+
 
 
 	@frappe.whitelist()
@@ -112,6 +155,7 @@ class PreparationOrderNote(Document):
 					WHERE c.stored_qty > 0 AND c.bin_location = %s
 					LIMIT 2
 				""", (bin_name,), as_dict=1)
+
 
 			elif field_prefix == "Pallet":
 				data = frappe.db.sql("""
@@ -179,10 +223,11 @@ class PreparationOrderNote(Document):
 			return "No Show"
 
 def get_required_qty(self, item):
-    for d in self.item_grid:
-        if d.item_code == item:
-            return d
-    frappe.throw("Scanned item is not in the required items list!")
+	frappe.errprint(item)
+	for d in self.item_grid:
+		if d.item_code == item:
+			return d
+	frappe.throw("item is not in the required items list!")
 
 
 
@@ -192,26 +237,26 @@ def get_delivery_request(customer):
 	 where dr.customer="{0}"  and dr.docstatus=1 and dr.doc_status="To make Preparation Order" order by dr.creation  desc """.format(customer),as_dict=True)
 	return data
 
-@frappe.whitelist()
-def get_bin(item,batch,warehouse):
-	item_escaped = frappe.db.escape(item)
-	batch_escaped = frappe.db.escape(batch)
-	warehouse_escaped = frappe.db.escape(warehouse)
+# @frappe.whitelist()
+# def get_bin(item,batch,warehouse):
+# 	item_escaped = frappe.db.escape(item)
+# 	batch_escaped = frappe.db.escape(batch)
+# 	warehouse_escaped = frappe.db.escape(warehouse)
 
-	data = frappe.db.sql(
-		"""SELECT bin_location 
-		   FROM `tabitem bin location` 
-		   WHERE parent = {0} 
-		   AND batch_no = {1} 
-		   AND warehouse = {2}"""
-		.format(item_escaped, batch_escaped, warehouse_escaped),
-		as_dict=True
-	)
+# 	data = frappe.db.sql(
+# 		"""SELECT bin_location 
+# 		   FROM `tabitem bin location` 
+# 		   WHERE parent = {0} 
+# 		   AND batch_no = {1} 
+# 		   AND warehouse = {2}"""
+# 		.format(item_escaped, batch_escaped, warehouse_escaped),
+# 		as_dict=True
+# 	)
 
-	lst = [" "]
-	for d in data:
-		lst.append(d.bin_location)
-	return lst
+# 	lst = [" "]
+# 	for d in data:
+# 		lst.append(d.bin_location)
+# 	return lst
 	
 @frappe.whitelist()
 def update_row(item,batch,warehouse,bin_location_name):
@@ -228,8 +273,8 @@ def get_stock(item):
 	return stk
 
 def is_batch_item(item_code):
-    has_batch_no = frappe.get_value('Item', item_code, 'has_batch_no')
-    return has_batch_no 
+	has_batch_no = frappe.get_value('Item', item_code, 'has_batch_no')
+	return has_batch_no 
 
 
 @frappe.whitelist()
@@ -246,7 +291,7 @@ def make_delivery_note(source_name, target_doc=None):
 				"required_date":"required_date",
 				"address_and_contact_details":"address_display",
 				"name":"prepration",
-                "delivery_request":"delivery_request"
+				"delivery_request":"delivery_request"
 			}
 		},
 		"Preparation tem":{
@@ -324,3 +369,28 @@ def get_item(source_name, target_doc=None):
 		}
 	}, target_doc, set_missing_values)
 	return mapper
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def bin_filter(doctype, txt, searchfield, start, page_len, filters):
+	items = filters.get('item_code_list')
+	if not items:
+		return []
+
+	placeholders = ','.join(['%s'] * len(items))
+
+	query = f"""
+		SELECT bin_location
+		FROM `tabitem bin location`
+		WHERE parent IN ({placeholders})
+		AND bin_location LIKE %s
+		LIMIT %s OFFSET %s
+	"""
+
+	args = items + [f"%{txt}%", page_len, start]
+	frappe.errprint("QUERY TO EXECUTE:")
+	frappe.errprint(query)
+	frappe.errprint("ARGS:")
+	frappe.errprint(args)
+
+
+	return frappe.db.sql(query, args, as_dict=False)

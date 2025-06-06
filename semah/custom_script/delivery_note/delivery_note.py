@@ -4,34 +4,56 @@ from frappe.model.mapper import get_mapped_doc
 from frappe.utils import  flt
 
 def on_update(self,method=None):
-    update_bin_status(self)
+    # update_bin_status(self)
+    pass
 
-def update_bin_status(self):
-    for itm in self.get("storage_details"):
-        if not itm.bin_location:
+def update_bin_status(self, operation=-1):
+    """
+    Update bin status for Delivery Note:
+    - operation = -1: stock out (on submit)
+    - operation = +1: stock in (on cancel)
+    """
+    for row in self.get("storage_details"):  # adjust if child table is named differently
+        bin_name = row.bin_location
+        pallet_name = row.pallet
+        delta_qty = flt(row.stored_qty) * operation
+
+        if not bin_name:
             continue
 
-        bin_name = itm.bin_location
+        # Get current total stored qty in this bin (excluding this delivery note)
+        existing_qty = frappe.db.sql("""
+            SELECT SUM(stored_qty)
+            FROM `tabitem bin location`
+            WHERE bin_location = %s 
+        """, (bin_name,))[0][0] or 0
 
-        dt = frappe.db.sql("""
-            SELECT * FROM `tabitem bin location`
-            WHERE bin_location = %s AND stored_qty > 0 AND docstatus < 2
-        """, (bin_name,), as_dict=1)
+        # Net quantity after this delivery note's effect
+        total_qty = flt(existing_qty) + delta_qty
 
-        if len(dt) > 1:
-            frappe.throw(f"Data Integrity Error: Multiple active entries for bin '{bin_name}' with stored_qty > 0")
+        # If bin not linked to pallet, only mark as Vacant or Occupied
+        if not pallet_name:
+            status = "Vacant" if total_qty <= 0 else "Occupied"
+            frappe.db.set_value("Bin Name", bin_name, "status", status)
+            continue
 
-        if not dt:
-            frappe.db.set_value("Bin Name", bin_name, "status", "Vacant")
+        # Get pallet capacity
+        try:
+            capacity = flt(frappe.db.get_value("Pallet", pallet_name, "capacity"))
+        except Exception:
+            frappe.throw(f"Pallet '{pallet_name}' not found for bin '{bin_name}'")
+
+        # Set bin status based on final quantity
+        if total_qty <= 0:
+            status = "Vacant"
+        elif total_qty < capacity:
+            status = "Partially Occupied"
         else:
-            pallet = frappe.get_doc("Pallet", dt[0].pallet)
-            stored_qty = flt(dt[0].stored_qty, 2)
-            capacity = flt(pallet.capacity, 2)
+            status = "Occupied"
 
-            if stored_qty < capacity:
-                frappe.db.set_value("Bin Name", bin_name, "status", "Partially Occupied")
-            else:
-                frappe.db.set_value("Bin Name", bin_name, "status", "Occupied")
+        frappe.db.set_value("Bin Name", bin_name, "status", status)
+
+
 
                 
 
@@ -73,6 +95,7 @@ def get_item(customer):
 
 @frappe.whitelist()
 def before_submit(doc, method):
+    update_bin_status(doc,operation=-1) 
     def calculate_area_use(length, width, height, stored_qty):
         """Calculate the area use based on dimensions and stored quantity."""
         if not height:
@@ -111,6 +134,7 @@ def before_submit(doc, method):
 
 @frappe.whitelist()
 def before_cancel(doc, method):
+    update_bin_status(doc,operation=+1) 
     def calculate_area_use(length, width, height, stored_qty):
         """Calculate the area use based on dimensions and stored quantity."""
         if not height:

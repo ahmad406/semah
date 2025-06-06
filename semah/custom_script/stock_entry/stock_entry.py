@@ -54,6 +54,33 @@ class CustomStockEntry(StockEntry):
         self.calculate_rate_and_amount()
         self.validate_putaway_capacity()
         self.calculate_total_qty()
+
+    def validate_bins(self):
+        for row in self.storage_details:
+            bin_location = row.bin_location
+            qty = row.stored_qty
+
+            bin_status = frappe.db.get_value("Bin Name", bin_location, "status")
+            if bin_status == "Vacant":
+                continue  # No validation needed for vacant bins
+
+            result = frappe.db.sql("""
+                SELECT p.capacity, c.stored_qty
+                FROM `tabPallet` p
+                INNER JOIN `tabitem bin location` c ON p.name = c.pallet
+                WHERE c.parent = %s AND c.expiry = %s AND c.bin_location = %s
+                LIMIT 1
+            """, (self.item, self.expiry, bin_location), as_dict=True)
+
+            if not result:
+                frappe.throw(f"Bin {bin_location} is not linked to Item {self.item} with expiry {self.expiry}.")
+
+            available_qty = result[0].capacity - result[0].stored_qty
+            if available_qty < qty:
+                frappe.throw(
+                    f"Bin {bin_location} has only {available_qty} units available, but you selected {qty}."
+                )
+
  
 
     def validate_pallet_capacity(self):
@@ -233,6 +260,7 @@ class CustomStockEntry(StockEntry):
 
     @frappe.whitelist()
     def before_cancel(self):
+        self.update_bin_status(include_self=False)
         def revert_bin_location(target_doc, bin_details):
             """
             Reverts bin location and warehouse back to original values stored in t_bin and t_warehouse.
@@ -350,12 +378,12 @@ class CustomStockEntry(StockEntry):
         combined = int(year + number)
         return(combined) 
     @frappe.whitelist()
-    def get_pallet(self,bin):
+    def get_pallet(self,bin,expiry):
         if bin:
             dt = frappe.db.sql("""
                     SELECT * FROM `tabitem bin location`
-                    WHERE bin_location = %s AND stored_qty > 0 AND docstatus < 2
-                """, (bin,), as_dict=1)
+                    WHERE bin_location = %s and expiry=%s AND stored_qty > 0 
+                """, (bin,expiry), as_dict=1)
             if len(dt) > 1:
                     frappe.throw(f"Data Integrity Error: Multiple active entries for bin '{bin}' with stored_qty > 0")
 
@@ -365,35 +393,47 @@ class CustomStockEntry(StockEntry):
                 return dt[0].pallet
          
 
-    def on_update(self):
-        self.update_bin_status()
 
-    def update_bin_status(self):
-        for itm in self.get("storage_details"):
-            if not itm.bin_location:
+
+    def update_bin_status(self, include_self=True):
+        for row in self.get("storage_details"):
+            bin_name = row.bin_location
+            if not bin_name:
                 continue
 
-            bin_name = itm.bin_location
+            existing_qty = frappe.db.sql("""
+                SELECT SUM(stored_qty)
+                FROM `tabitem bin location`
+                WHERE bin_location = %s AND docstatus = 1 {cond}
+            """.format(cond="AND parent != %s" if include_self else ""), 
+            (bin_name,) if not include_self else (bin_name, self.name))[0][0] or 0
 
-            dt = frappe.db.sql("""
-                SELECT * FROM `tabitem bin location`
-                WHERE bin_location = %s AND stored_qty > 0 AND docstatus < 2
-            """, (bin_name,), as_dict=1)
+            current_qty = flt(row.stored_qty) if include_self else 0
+            total_qty = flt(existing_qty + current_qty)
 
-            if len(dt) > 1:
-                frappe.throw(f"Data Integrity Error: Multiple active entries for bin '{bin_name}' with stored_qty > 0")
-
-            if not dt:
+            pallet_name = row.pallet
+            if not pallet_name:
                 frappe.db.set_value("Bin Name", bin_name, "status", "Vacant")
-            else:
-                pallet = frappe.get_doc("Pallet", dt[0].pallet)
-                stored_qty = flt(dt[0].stored_qty, 2)
-                capacity = flt(pallet.capacity, 2)
+                continue
 
-                if stored_qty < capacity:
-                    frappe.db.set_value("Bin Name", bin_name, "status", "Partially Occupied")
-                else:
-                    frappe.db.set_value("Bin Name", bin_name, "status", "Occupied")
+            try:
+                pallet_doc = frappe.get_doc("Pallet", pallet_name)
+                capacity = flt(pallet_doc.capacity)
+            except frappe.DoesNotExistError:
+                frappe.throw(f"Pallet '{pallet_name}' not found for bin '{bin_name}'")
+
+            if total_qty <= 0:
+                status = "Vacant"
+            elif total_qty < capacity:
+                status = "Partially Occupied"
+            else:
+                status = "Occupied"
+
+
+            frappe.msgprint(status)
+
+            frappe.db.set_value("Bin Name", bin_name, "status", status)
+
 
                     
 
@@ -402,6 +442,7 @@ class CustomStockEntry(StockEntry):
     def before_submit(self):
         self.create_pallet()
         self.validate_pallet_capacity()
+        self.update_bin_status(include_self=True)
         # self.update_bin_status()
         def update_or_create_bin(target_doc, bin_details, action):
             """
@@ -844,6 +885,51 @@ WHERE capacity > stored_qty
         'start': start,
         'page_len': page_len
     }, as_dict=False)
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_bin(doctype, txt, searchfield, start, page_len, filters):
+    item = filters.get('item')
+    expiry = filters.get('expiry')
+    qty = filters.get('qty')
+
+    selected_bins = filters.get('selected_bins') or []
+
+    # Prepare placeholders for NOT IN
+    placeholders = ','.join(['%s'] * len(selected_bins)) if selected_bins else None
+    condition1 = f"AND c.bin_location NOT IN ({placeholders})" if selected_bins else ""
+    condition2 = f"AND name NOT IN ({placeholders})" if selected_bins else ""
+
+    query = f"""
+        SELECT DISTINCT bin_location, status_type, bal FROM (
+            -- From Item Bin Location where pallet has space
+            SELECT c.bin_location, "Partial" status_type, p.capacity - c.stored_qty AS bal
+            FROM `tabPallet` p
+            INNER JOIN `tabitem bin location` c ON p.name = c.pallet
+            WHERE c.parent = %s AND c.expiry = %s
+              AND p.capacity - c.stored_qty >= %s
+              {condition1}
+
+            UNION
+
+            -- From Bin Name where status is Vacant
+            SELECT name as bin_location, "Vacant" status_type, 0 AS bal
+            FROM `tabBin Name`
+            WHERE status = 'Vacant'
+              {condition2}
+        ) AS all_bins
+        WHERE bin_location LIKE %s
+        LIMIT %s OFFSET %s
+    """
+
+    args = [item, expiry, qty]
+    if selected_bins:
+        args += selected_bins + selected_bins  # for both NOT IN clauses
+    args += [f"%{txt}%", page_len, start]
+
+    return frappe.db.sql(query, args, as_dict=False)
+
+
 
 
 

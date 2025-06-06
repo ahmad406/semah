@@ -3,17 +3,17 @@
 var total = 0
 frappe.ui.form.on('Preparation Order Note', {
 
-    customer: function(frm) {
+    customer: function (frm) {
 
         var customer = [];
         if (frm.doc.customer) {
 
-            frappe.model.with_doc("Customer", frm.doc.customer, function() {
+            frappe.model.with_doc("Customer", frm.doc.customer, function () {
                 var d = frappe.model.get_doc("Customer", frm.doc.customer)
 
                 if (cur_frm.doc.customer == d.name) {
                     console.log(d.name, "jj")
-                    $.each(d.sub_customer, function(index, row) {
+                    $.each(d.sub_customer, function (index, row) {
                         customer.push(row.sub_customer_full_name)
                     });
 
@@ -29,75 +29,75 @@ frappe.ui.form.on('Preparation Order Note', {
         }
 
     },
-    onload: function(frm) {
+    onload: function (frm) {
         calculateItemGridQuanitty();
         calculateDeliveryqty();
         cur_frm.set_value("naming_series", "MAT-PON-.YYYY.-")
     },
-    before_submit: function(frm) {
+    before_submit: function (frm) {
         cur_frm.doc.order_status = "To make Delivery Note"
     },
-    barcode:function(frm){
+    barcode: function (frm) {
         frappe.call({
             method: "add_item_in_storage",
-			doc: cur_frm.doc,
-            callback: function(r) {
+            doc: cur_frm.doc,
+            callback: function (r) {
                 if (r.message) {
                     cur_frm.refresh()
-                   
+
                 }
             }
         });
 
     },
-    insert:function(frm){
+    insert: function (frm) {
         frappe.call({
             method: "add_item_in_storage",
-			doc: cur_frm.doc,
-            args:{"insert":true},
-            callback: function(r) {
+            doc: cur_frm.doc,
+            args: { "insert": true },
+            callback: function (r) {
                 if (r.message) {
                     cur_frm.refresh()
-                   
+
                 }
             }
         });
 
     },
-    refresh: function(frm) {
+    refresh: function (frm) {
         $('[data-fieldname="tem"]').css("display", "none");
         if (!frm.is_new()) {
             frm.trigger("batch_no")
             frm.trigger("customer")
 
         }
-        if (cur_frm.doc.docstatus!=1){
+        if (cur_frm.doc.docstatus != 1) {
             frm.page.wrapper.find('use[href="#icon-printer"]').closest("button").hide();
 
         }
         cur_frm.get_field("item_grid").grid.cannot_add_rows = true
         cur_frm.fields_dict["item_grid"].grid.remove_rows_button.hide()
         cur_frm.fields_dict["item_grid"].grid.refresh();
-        cur_frm.get_field("scanned_items").grid.cannot_add_rows=true   
-        if (frappe.user.has_role("Labour")){
-        cur_frm.fields_dict['scanned_items'].grid.wrapper.find('.grid-remove-all-rows').hide(); 
-        cur_frm.fields_dict['scanned_items'].grid.wrapper.find('.grid-remove-rows').hide();  
-        frm.fields_dict['scanned_items'].grid.wrapper.find('.grid-delete-row').hide(); 
-        frm.fields_dict['scanned_items'].grid.wrapper.find('.edit-grid-row').hide(); 
+        cur_frm.get_field("scanned_items").grid.cannot_add_rows = true
+        if (frappe.user.has_role("Labour")) {
+            cur_frm.fields_dict['scanned_items'].grid.wrapper.find('.grid-remove-all-rows').hide();
+            cur_frm.fields_dict['scanned_items'].grid.wrapper.find('.grid-remove-rows').hide();
+            frm.fields_dict['scanned_items'].grid.wrapper.find('.grid-delete-row').hide();
+            frm.fields_dict['scanned_items'].grid.wrapper.find('.edit-grid-row').hide();
 
         }
 
         frm.trigger("customer")
-        if(cur_frm.doc.docstatus==1){
+        if (cur_frm.doc.docstatus == 1) {
 
             frm.add_custom_button(__('Delivery Note'),
-            function() {
-                frm.trigger("delivery_note")
-            }, __('Create'));
+                function () {
+                    frm.trigger("delivery_note")
+                }, __('Create'));
         }
 
         frm.add_custom_button(__('Delivery Request'),
-            function() {
+            function () {
                 if (!cur_frm.doc.customer) {
                     frappe.throw({
                         title: __("Mandatory"),
@@ -129,7 +129,7 @@ frappe.ui.form.on('Preparation Order Note', {
         }
 
     },
-    add_delivery_request: function(frm) {
+    add_delivery_request: function (frm) {
 
         var table_fields = []
         var data = []
@@ -168,10 +168,10 @@ frappe.ui.form.on('Preparation Order Note', {
                     return data;
                 }
             }],
-            primary_action: async function({ delivery_request }) {
+            primary_action: async function ({ delivery_request }) {
                 if (delivery_request.length > 0) {
                     var _return = true
-                    var items = $.grep(delivery_request, function(element, index) {
+                    var items = $.grep(delivery_request, function (element, index) {
                         return element.__checked == 1;
                     });
                     if (items.length > 1) {
@@ -227,7 +227,7 @@ frappe.ui.form.on('Preparation Order Note', {
 
                                 });
                                 cur_frm.refresh_field('item_grid')
-                                    //_property('storage_details', 'read_only', 1)
+                                //_property('storage_details', 'read_only', 1)
                                 dialog.hide();
 
                             })
@@ -245,7 +245,7 @@ frappe.ui.form.on('Preparation Order Note', {
             args: {
                 'customer': frm.doc.customer
             },
-            callback: function(r) {
+            callback: function (r) {
                 data = r.message
             }
         })
@@ -257,7 +257,7 @@ frappe.ui.form.on('Preparation Order Note', {
     },
 
 
-    before_save: function(frm) {
+    before_save: function (frm) {
         var storage = cur_frm.doc.storage_details
         var row = cur_frm.add_child("storage_details");
         cur_frm.clear_table("tem");
@@ -265,7 +265,7 @@ frappe.ui.form.on('Preparation Order Note', {
             var row = cur_frm.add_child("tem");
             row.item = value["item"]
             row.warehouse = value["warehouse"]
-                // row.bin_location_name = value["bin_location_name"]
+            // row.bin_location_name = value["bin_location_name"]
             row.batch_no = value["batch_no"]
             row.delivery_qty = value["delivery_qty"]
             row.expiry_date = value["expiry_date"]
@@ -284,7 +284,7 @@ frappe.ui.form.on('Preparation Order Note', {
     },
 
 
-    update_storage: function(frm, cdt, cdn) {
+    update_storage: function (frm, cdt, cdn) {
         var d = locals[cdt][cdn];
         var itm = frm.doc.item_grid
 
@@ -295,7 +295,7 @@ frappe.ui.form.on('Preparation Order Note', {
                 args: {
                     item: itm[i].item_code
                 },
-                callback: function(r) {
+                callback: function (r) {
                     console.log(r)
                     if (i == 0) {
                         cur_frm.clear_table("storage_details");
@@ -311,7 +311,7 @@ frappe.ui.form.on('Preparation Order Note', {
                     for (var j = 0; j < list.length; j++) {
                         console.log(list[j].stored_qty)
 
-                        if (qty_required > 0 && list[j].stored_qty>0) {
+                        if (qty_required > 0 && list[j].stored_qty > 0) {
                             var rw = cur_frm.add_child("storage_details");
                             // frappe.model.set_value(rw.doctype, rw.name, "batch_no", list[j].batch_no)
                             rw.batch_no = list[j].batch_no
@@ -325,7 +325,7 @@ frappe.ui.form.on('Preparation Order Note', {
                             rw.expiry_date = list[j].expiry
                             rw.bin_location_name = list[j].bin_location
                             rw.pallet = list[j].pallet
-                                // rw.batch_no = list[j].batch_no
+                            // rw.batch_no = list[j].batch_no
                             rw.stored_qty = list[j].stored_qty
                             rw.area_used = list[j].area_use
                             rw.stored_in = list[j].stored_in
@@ -373,7 +373,7 @@ frappe.ui.form.on('Preparation Order Note', {
 
 
     },
-    delivery_note: function(frm) {
+    delivery_note: function (frm) {
 
 
         frappe.model.open_mapped_doc({
@@ -382,32 +382,43 @@ frappe.ui.form.on('Preparation Order Note', {
         })
 
     },
-    setup: function(frm) {
+    setup: function (frm) {
         // if (!frm.is_new()) {
-        $(frm.wrapper).on('grid-row-render', function(e, grid_row) {
-            if (in_list(['Preparation Storage Details'], grid_row.doc.doctype)) {
-                console.log(grid_row.doc.idx);
-                if (grid_row && grid_row.doc.item && grid_row.doc.batch_no && grid_row.doc.warehouse) {
-                    // grid_row.columns_list[4].df.options =[""]
-                    frappe.call({
-                        method: "semah.semah.doctype.preparation_order_note.preparation_order_note.get_bin",
-                        args: {
-                            item: grid_row.doc.item,
-                            batch: grid_row.doc.batch_no,
-                            warehouse: grid_row.doc.warehouse,
-                        },
-                        callback: function(r) {
-                            grid_row.columns_list[4].df.options = r.message
+        // $(frm.wrapper).on('grid-row-render', function(e, grid_row) {
+        //     if (in_list(['Preparation Storage Details'], grid_row.doc.doctype)) {
+        //         console.log(grid_row.doc.idx);
+        //         if (grid_row && grid_row.doc.item && grid_row.doc.batch_no && grid_row.doc.warehouse) {
+        //             // grid_row.columns_list[4].df.options =[""]
+        //             frappe.call({
+        //                 method: "semah.semah.doctype.preparation_order_note.preparation_order_note.get_bin",
+        //                 args: {
+        //                     item: grid_row.doc.item,
+        //                     batch: grid_row.doc.batch_no,
+        //                     warehouse: grid_row.doc.warehouse,
+        //                 },
+        //                 callback: function(r) {
+        //                     grid_row.columns_list[4].df.options = r.message
 
-                        }
-                    })
+        //                 }
+        //             })
 
 
-                }
-            }
-        });
+        //         }
+        //     }
+        // });
         // }
-        frm.set_query("item", "storage_details", function(frm, cdt, cdn) {
+        cur_frm.set_query("bin_location_name", "storage_details", function (frm, cdt, cdn) {
+            const item_code_list = (cur_frm.doc.item_grid || []).map(row => row.item_code).filter(Boolean);
+
+            return {
+                query: 'semah.semah.doctype.preparation_order_note.preparation_order_note.bin_filter',
+                filters: {
+                    "item_code_list": item_code_list
+                }
+            };
+        });
+
+        frm.set_query("item", "storage_details", function (frm, cdt, cdn) {
             var item_list = [];
             for (var i = 0; i < cur_frm.doc.item_grid.length; i++) {
                 item_list.push(cur_frm.doc.item_grid[i].item_code)
@@ -420,7 +431,7 @@ frappe.ui.form.on('Preparation Order Note', {
                 };
             else return {}
         });
-        frm.set_query("warehouse", "storage_details", function(frm, cdt, cdn) {
+        frm.set_query("warehouse", "storage_details", function (frm, cdt, cdn) {
             var item_list = [];
             return {
                 "filters": {
@@ -428,12 +439,12 @@ frappe.ui.form.on('Preparation Order Note', {
                 }
             }
         });
-        frm.set_query("batch_no", "storage_details", function(frm, cdt, cdn) {
+        frm.set_query("batch_no", "storage_details", function (frm, cdt, cdn) {
             var value = locals[cdt][cdn]
             var batch = [];
-            frappe.model.with_doc("Item", value.item, function() {
+            frappe.model.with_doc("Item", value.item, function () {
                 var tabletransfer = frappe.model.get_doc("Item", value.item)
-                $.each(tabletransfer.bin, function(index, row) {
+                $.each(tabletransfer.bin, function (index, row) {
                     if (value.warehouse == row.warehouse && value.item == tabletransfer.name) {
                         batch.push(row.batch_no)
 
@@ -451,13 +462,13 @@ frappe.ui.form.on('Preparation Order Note', {
             }
         });
     },
-    validate: function(frm) {
+    validate: function (frm) {
         var storage = frm.doc.storage_details
         var item = frm.doc.item_grid
         var qty = 0
         for (var i = 0; i < item.length; i++) {
             qty = 0;
-            var items = $.grep(storage, function(element, index) {
+            var items = $.grep(storage, function (element, index) {
                 return element.item == item[i].item_code;
             });
             if (items.length > 0) {
@@ -489,7 +500,7 @@ frappe.ui.form.on('Preparation Order Note', {
             // }
             if (item[i].qty_required == undefined) {
                 frappe.msgprint("Delivery Quantity should not be greater than Required Qty!!")
-                    //value.delivery_qty=''
+                //value.delivery_qty=''
                 validated = false;
                 return false;
             }
@@ -498,7 +509,7 @@ frappe.ui.form.on('Preparation Order Note', {
         for (var i = 0; i < storage.length; i++) {
             if (storage[i].delivery_qty > storage[i].stored_qty) {
                 frappe.msgprint("Delivery Quantity should not be greater than Stored Qty!!")
-                    //value.delivery_qty=''
+                //value.delivery_qty=''
                 validated = false;
                 return false;
             }
@@ -512,7 +523,7 @@ frappe.ui.form.on('Preparation Storage Details', {
     //  
 
 
-    delivery_qty: function(frm, cdt, cdn) {
+    delivery_qty: function (frm, cdt, cdn) {
 
         //var total=0
         var row = locals[cdt][cdn];
@@ -520,7 +531,7 @@ frappe.ui.form.on('Preparation Storage Details', {
         var value = frm.doc.item_grid
         if (row.stored_qty == undefined) {
             frappe.msgprint("Delivery Quantity should not be greater than Stored Qty!!")
-                //value.delivery_qty=''
+            //value.delivery_qty=''
             validated = false;
             return false;
         }
@@ -529,8 +540,8 @@ frappe.ui.form.on('Preparation Storage Details', {
             if (row.item == items[i].item) {
                 //console.log(items[i].item)
                 total = total + items[i].delivery_qty
-                    //console.log(items[i].delivery_qty)
-                    //console.log(total,'total')
+                //console.log(items[i].delivery_qty)
+                //console.log(total,'total')
             }
         }
         //total=total+row.delivery_qty;
@@ -549,14 +560,14 @@ frappe.ui.form.on('Preparation Storage Details', {
 
     },
 
-    expiry_date: function(frm, cdt, cdn) {
+    expiry_date: function (frm, cdt, cdn) {
         cur_frm.refresh_fields("storage_details")
         cur_frm.refresh_fields("storage_details")
     },
-    batch_no: function(frm, cdt, cdn) {
+    batch_no: function (frm, cdt, cdn) {
         var child = locals[cdt][cdn];
         if (child.batch_no) {
-            setTimeout(function() { frappe.model.set_value(cdt, cdn, "bin_location_name", " ") }, 400);
+            setTimeout(function () { frappe.model.set_value(cdt, cdn, "bin_location_name", " ") }, 400);
 
             cur_frm.refresh_fields("storage_details")
             cur_frm.refresh_fields("storage_details")
@@ -564,43 +575,54 @@ frappe.ui.form.on('Preparation Storage Details', {
 
 
     },
-    bin_location_name: function(frm, cdt, cdn) {
+    bin_location_name: function (frm, cdt, cdn) {
         var child = locals[cdt][cdn];
-        console.log(child.bin_location_name != "")
         if (child.bin_location_name != '') {
-            if (child.item && child.batch_no && child.warehouse && child.bin_location_name) {
-                frappe.call({
-                    method: "semah.semah.doctype.preparation_order_note.preparation_order_note.update_row",
-                    args: {
-                        item: child.item,
-                        batch: child.batch_no,
-                        warehouse: child.warehouse,
-                        bin_location_name: child.bin_location_name
-                    },
-                    callback: function(r) {
-                        if (r) {
-                            console.log(r)
-                            var result = r.message[0]
-                                // if (r.message[0].stored_qty || r.message[0].stored_qty > 0) {
-                                //   frappe.throw("insufficient  Quantity")
-                                // }
-                                // else {
-                            frappe.model.set_value(cdt, cdn, "stored_qty", result.stored_qty)
-                            frappe.model.set_value(cdt, cdn, "stored_in", result.stored_in)
-                            frappe.model.set_value(cdt, cdn, "sub_customer", result.sub_customer)
 
-
-                            frappe.model.set_value(cdt, cdn, "height", result.height)
-                            frappe.model.set_value(cdt, cdn, "width", result.width)
-                            frappe.model.set_value(cdt, cdn, "length", result.length)
-                            frappe.model.set_value(cdt, cdn, "area_used", result.area_use)
-
-                            // }
-                        }
+            frappe.call({
+                method: "fetch_item_details",
+                doc: cur_frm.doc,
+                args:{"row":child},
+                callback: function (r) {
+                    if (r.message) {
+                        cur_frm.refresh()
 
                     }
-                })
-            }
+                }
+            });
+            // if (child.item && child.batch_no && child.warehouse && child.bin_location_name) {
+            //     frappe.call({
+            //         method: "semah.semah.doctype.preparation_order_note.preparation_order_note.update_row",
+            //         args: {
+            //             item: child.item,
+            //             batch: child.batch_no,
+            //             warehouse: child.warehouse,
+            //             bin_location_name: child.bin_location_name
+            //         },
+            //         callback: function (r) {
+            //             if (r) {
+            //                 console.log(r)
+            //                 var result = r.message[0]
+            //                 // if (r.message[0].stored_qty || r.message[0].stored_qty > 0) {
+            //                 //   frappe.throw("insufficient  Quantity")
+            //                 // }
+            //                 // else {
+            //                 frappe.model.set_value(cdt, cdn, "stored_qty", result.stored_qty)
+            //                 frappe.model.set_value(cdt, cdn, "stored_in", result.stored_in)
+            //                 frappe.model.set_value(cdt, cdn, "sub_customer", result.sub_customer)
+
+
+            //                 frappe.model.set_value(cdt, cdn, "height", result.height)
+            //                 frappe.model.set_value(cdt, cdn, "width", result.width)
+            //                 frappe.model.set_value(cdt, cdn, "length", result.length)
+            //                 frappe.model.set_value(cdt, cdn, "area_used", result.area_use)
+
+            //                 // }
+            //             }
+
+            //         }
+            //     })
+            // }
         } else {
             frappe.model.set_value(cdt, cdn, "stored_qty", undefined)
             frappe.model.set_value(cdt, cdn, "stored_in", undefined)
@@ -617,7 +639,7 @@ frappe.ui.form.on('Preparation Storage Details', {
 
 })
 frappe.ui.form.on('Preparation Item Grid', {
-    item_code: function(frm, cdt, cdn) {
+    item_code: function (frm, cdt, cdn) {
         var row = locals[cdt][cdn]
         if (row.item_code) {
             var item = frm.doc.item_grid
@@ -633,7 +655,7 @@ frappe.ui.form.on('Preparation Item Grid', {
             }
         }
     },
-    item_grid_add: function(frm, cdt, cdn) {
+    item_grid_add: function (frm, cdt, cdn) {
         var row = locals[cdt][cdn]
         cur_frm.get_field("item_grid").grid.grid_rows[row.idx - 1].remove();
 
@@ -642,7 +664,7 @@ frappe.ui.form.on('Preparation Item Grid', {
     }
 
 });
-frappe.ui.form.on("Preparation Item Grid", "form_render", function(frm, cdt, cdn) {
+frappe.ui.form.on("Preparation Item Grid", "form_render", function (frm, cdt, cdn) {
     $(".row-actions").css("display", "none")
 
 });
@@ -650,10 +672,10 @@ frappe.ui.form.on("Preparation Item Grid", "form_render", function(frm, cdt, cdn
 
 frappe.ui.form.on('Preparation Item Grid', {
 
-    qty_required: function(frm, cdt, cdn) {
+    qty_required: function (frm, cdt, cdn) {
         calculateItemGridQuanitty();
     },
-    item_grid_remove: function(frm, cdt, cdn) {
+    item_grid_remove: function (frm, cdt, cdn) {
 
         calculateItemGridQuanitty();
     },
@@ -661,10 +683,10 @@ frappe.ui.form.on('Preparation Item Grid', {
 
 frappe.ui.form.on('Preparation Storage Details', {
 
-    delivery_qty: function(frm, cdt, cdn) {
+    delivery_qty: function (frm, cdt, cdn) {
         calculateDeliveryqty();
     },
-    storage_details_remove: function(frm, cdt, cdn) {
+    storage_details_remove: function (frm, cdt, cdn) {
 
         calculateDeliveryqty();
     },
@@ -681,7 +703,7 @@ frappe.ui.form.on('Preparation Storage Details', {
 
 function calculateItemGridQuanitty() {
     var total_stored_qty = 0;
-    $.each(cur_frm.doc.item_grid || [], function(i, d) {
+    $.each(cur_frm.doc.item_grid || [], function (i, d) {
         total_stored_qty += flt(d.qty_required);
     });
     cur_frm.set_value('total_quantity', total_stored_qty);
@@ -689,7 +711,7 @@ function calculateItemGridQuanitty() {
 
 function calculateDeliveryqty() {
     var total_stored_qty = 0;
-    $.each(cur_frm.doc.storage_details || [], function(i, d) {
+    $.each(cur_frm.doc.storage_details || [], function (i, d) {
         total_stored_qty += flt(d.delivery_qty);
     });
     cur_frm.set_value('total_delivery_quantity', total_stored_qty);

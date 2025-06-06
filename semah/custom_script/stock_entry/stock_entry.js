@@ -106,21 +106,18 @@ frappe.ui.form.on("Stock Entry", {
                     selected_bins.push(row.bin_location);
                 }
             });
-
-            // const current_row = locals[cdt][cdn];
-            // if (current_row.bin_location) {
-            //     const index = selected_bins.indexOf(current_row.bin_location);
-            //     if (index > -1) {
-            //         selected_bins.splice(index, 1);
-            //     }
-            // }
-
+            var child = locals[cdt][cdn];
             return {
-                filters: [
-                    ['Bin Name', 'status', '!=', "Occupied"],
-                    ['Bin Name', 'name', 'not in', selected_bins]
-                ]
-            };
+                query: 'semah.custom_script.stock_entry.stock_entry.get_bin',
+                filters: {
+                    "selected_bins": selected_bins,
+                    "item": child.item_code,
+                    "expiry": child.expiry,
+                    "qty":child.stored_qty
+                    // ,"warehouse":child.t_ware_house
+                }
+
+            }
         });
 
 
@@ -521,20 +518,23 @@ frappe.ui.form.on('Storage details', {
     //     frappe.model.set_value(cdt, cdn, "sub_customer", cur_frm.doc.sub_customer)
 
     // },
-    bin_location:function (frm, cdt, cdn) {
+    bin_location: function (frm, cdt, cdn) {
         var storage = locals[cdt][cdn]
-        frappe.call({
-                    method: "get_pallet",
-                    doc: cur_frm.doc,
-                    args:{"bin":storage.bin_location},
-                    callback: function(r) {
-                        if (r.message) {
-                            console.log(r.message)
-                          storage.pallet=r.message  
+        if (storage.bin_location) {
+
+            frappe.call({
+                method: "get_pallet",
+                doc: cur_frm.doc,
+                args: { "bin": storage.bin_location,"expiry": child.expiry },
+                callback: function (r) {
+                    if (r.message) {
+                        console.log(r.message)
+                        storage.pallet = r.message
                         cur_frm.refresh()
-                        }
                     }
-                });
+                }
+            });
+        }
     },
 
     batch_no: function (frm, cdt, cdn) {
