@@ -260,7 +260,7 @@ class CustomStockEntry(StockEntry):
 
     @frappe.whitelist()
     def before_cancel(self):
-        self.update_bin_status(include_self=False)
+        self.update_bin_status(not_canceled=False)
         def revert_bin_location(target_doc, bin_details):
             """
             Reverts bin location and warehouse back to original values stored in t_bin and t_warehouse.
@@ -395,32 +395,34 @@ class CustomStockEntry(StockEntry):
 
 
 
-    def update_bin_status(self, include_self=True):
+    def update_bin_status(self, not_canceled=True):
         for row in self.get("storage_details"):
             bin_name = row.bin_location
-            if not bin_name:
-                continue
+            item_code = row.item_code
+            pallet = row.pallet
 
+            if not bin_name:
+                frappe.throw(f"Bin location missing in row {row.idx or '[unknown]'}")
+
+            # Always use the correct parameters based on presence of pallet and item
             existing_qty = frappe.db.sql("""
                 SELECT SUM(stored_qty)
                 FROM `tabitem bin location`
-                WHERE bin_location = %s AND docstatus = 1 {cond}
-            """.format(cond="AND parent != %s" if include_self else ""), 
-            (bin_name,) if not include_self else (bin_name, self.name))[0][0] or 0
+                WHERE bin_location = %s AND parent = %s AND pallet = %s
+            """, (bin_name, item_code, pallet))[0][0] or 0
 
-            current_qty = flt(row.stored_qty) if include_self else 0
+            current_qty = flt(row.stored_qty) if not_canceled else flt(row.stored_qty) * -1
             total_qty = flt(existing_qty + current_qty)
 
-            pallet_name = row.pallet
-            if not pallet_name:
+            if not pallet:
                 frappe.db.set_value("Bin Name", bin_name, "status", "Vacant")
                 continue
 
             try:
-                pallet_doc = frappe.get_doc("Pallet", pallet_name)
+                pallet_doc = frappe.get_doc("Pallet", pallet)
                 capacity = flt(pallet_doc.capacity)
-            except frappe.DoesNotExistError:
-                frappe.throw(f"Pallet '{pallet_name}' not found for bin '{bin_name}'")
+            except frappe.DoesNotFoundError:
+                frappe.throw(f"Pallet '{pallet}' not found for bin '{bin_name}'")
 
             if total_qty <= 0:
                 status = "Vacant"
@@ -429,20 +431,14 @@ class CustomStockEntry(StockEntry):
             else:
                 status = "Occupied"
 
-
-            frappe.msgprint(status)
-
+            frappe.msgprint(f"Bin {bin_name} updated to {status}")
             frappe.db.set_value("Bin Name", bin_name, "status", status)
 
-
-                    
-
-   
     @frappe.whitelist()
     def before_submit(self):
         self.create_pallet()
         self.validate_pallet_capacity()
-        self.update_bin_status(include_self=True)
+        self.update_bin_status(not_canceled=True)
         # self.update_bin_status()
         def update_or_create_bin(target_doc, bin_details, action):
             """
@@ -907,7 +903,7 @@ def get_bin(doctype, txt, searchfield, start, page_len, filters):
             FROM `tabPallet` p
             INNER JOIN `tabitem bin location` c ON p.name = c.pallet
             WHERE c.parent = %s AND c.expiry = %s
-              AND p.capacity - c.stored_qty >= %s
+              AND p.capacity - c.stored_qty >= %s AND c.stored_qty>0
               {condition1}
 
             UNION

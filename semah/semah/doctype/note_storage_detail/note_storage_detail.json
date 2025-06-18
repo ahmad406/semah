@@ -43,9 +43,10 @@
   },
   {
    "fieldname": "bin_location_name",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Bin Location Name"
+   "label": "Bin Location Name",
+   "options": "Bin Name"
   },
   {
    "fetch_from": "batch_no.manufacturing_date",
@@ -104,7 +105,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-05-11 19:56:54.225767",
+ "modified": "2025-06-10 16:35:10.259748",
  "modified_by": "Administrator",
  "module": "Semah",
  "name": "Note Storage detail",
