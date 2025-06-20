@@ -121,8 +121,7 @@ class PreparationOrderNote(Document):
 					d.manufacture_date = item.manufacturing_date
 					d.delivery_qty=item.stored_qty
 					req_item=get_required_qty(self,item.item_code)
-					frappe.errprint(req_item.as_dict())
-					row.qty_required = req_item.get("qty_required") if req_item else 0
+					d.qty_required = req_item.get("qty_required") if req_item else 0
 
 
 					return True
@@ -223,7 +222,6 @@ class PreparationOrderNote(Document):
 			return "No Show"
 
 def get_required_qty(self, item):
-	frappe.errprint(item)
 	for d in self.item_grid:
 		if d.item_code == item:
 			return d

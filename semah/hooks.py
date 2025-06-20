@@ -6,7 +6,7 @@ app_publisher = "Dconnex"
 app_description = "App for semah v13 erpnext"
 app_icon = "octicon octicon-file-directory"
 app_color = "grey"
-app_email = "cloud@avu.net.in"
+app_email = "cloud@erpflexi.net.in"
 app_license = "MIT"
 
 # Includes in <head>
@@ -97,7 +97,8 @@ doctype_list_js = {
 
 override_doctype_class = {
     
-	"Stock Entry": "semah.custom_script.stock_entry.stock_entry.CustomStockEntry"
+	"Stock Entry": "semah.custom_script.stock_entry.stock_entry.CustomStockEntry",
+ 	"Delivery Note": "semah.custom_script.delivery_note.delivery_note.CustomDeliveryNote",
 }
 
 # Document Events
@@ -105,21 +106,7 @@ override_doctype_class = {
 # Hook on document methods and events
 
 doc_events = {
-	# "Stock Entry": {
-	# 	# "onload": "semah.custom_script.stock_entry.stock_entry.onload",
-	# 	# "validate": "semah.custom_script.stock_entry.stock_entry.validate",
-	# 	"before_submit" : "semah.custom_script.stock_entry.stock_entry.before_submit",
-	# 	"on_submit" : "semah.custom_script.stock_entry.stock_entry.on_submit",
-	# 	"before_cancel" : "semah.custom_script.stock_entry.stock_entry.before_cancel",
-	# 	"on_cancel" : "semah.custom_script.stock_entry.stock_entry.on_cancel",
-		
-	# },
-	"Delivery Note": {
-		"before_submit" : "semah.custom_script.delivery_note.delivery_note.before_submit",
-		"before_cancel" : "semah.custom_script.delivery_note.delivery_note.before_cancel",
-        "on_submit" : "semah.custom_script.delivery_note.delivery_note.on_submit",
-		 "on_cancel" : "semah.custom_script.delivery_note.delivery_note.on_cancel"
-	},
+
     "Customer": {
 		"validate" : "semah.custom_script.customer.customer.validate",
 	},

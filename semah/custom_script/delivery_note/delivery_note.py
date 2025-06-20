@@ -1,84 +1,156 @@
-import frappe
-from frappe.model.document import Document
-from frappe.model.mapper import get_mapped_doc
+
 from frappe.utils import  flt
+import frappe
+from erpnext.stock.doctype.delivery_note.delivery_note import  DeliveryNote
+from erpnext.stock.doctype.delivery_note.delivery_note import *
 
-def on_update(self,method=None):
-    # update_bin_status(self)
-    pass
+class CustomDeliveryNote(DeliveryNote):
+    @frappe.whitelist()
+    def before_submit(self):
+        self.update_bin_status()
+        self.update_pon_status()
 
-def update_bin_status(self, canceled=False):
-    for row in self.get("storage_details"):
-        bin_name = row.bin_location
-        item_code = row.item_code
-        pallet = row.pallet
+        def calculate_area_use(length, width, height, stored_qty):
+            """Calculate the area use based on dimensions and stored quantity."""
+            if not height:
+                return length * width * stored_qty
+            return length * width * height * stored_qty
 
-        if not bin_name:
-            frappe.throw(f"Bin location missing in row {row.idx or '[unknown]'}")
+        for storage in self.get('storage_details'):
+            to_update = False
+            item = frappe.get_doc("Item", storage.item_code)
 
-        # Always use the correct parameters based on presence of pallet and item
-        existing_qty = frappe.db.sql("""
-            SELECT SUM(stored_qty)
-            FROM `tabitem bin location`
-            WHERE bin_location = %s AND parent = %s AND pallet = %s
-        """, (bin_name, item_code, pallet))[0][0] or 0
+            for bin_entry in item.bin:
+                # Skip bins with zero or negative quantity
+                if bin_entry.stored_qty <= 0:
+                    continue
 
-        current_qty = flt(row.stored_qty) * (-1 if not canceled else 1)
+                # Match all required conditions, including pallet
+                conditions_met = (
+                    (storage.batch_no == bin_entry.batch_no if storage.batch_no else True) and
+                    (storage.bin_location_name == bin_entry.bin_location) and
+                    (storage.warehouse == bin_entry.warehouse) and
+                    (convert_to_string(storage.expiry_date) == convert_to_string(bin_entry.expiry) if storage.expiry_date else True) and
+                    (storage.pallet == bin_entry.pallet if storage.pallet else True)
+                )
 
-        total_qty = flt(existing_qty + current_qty)
+                if conditions_met:
+                    if bin_entry.stored_qty < storage.delivery_qty:
+                        frappe.throw(
+                            f"Cannot deliver {storage.delivery_qty} from bin '{bin_entry.bin_location}' "
+                            f"for item {storage.item_code} — only {bin_entry.stored_qty} in stock."
+                        )
 
-        if not pallet:
-            frappe.throw(f"Pallet missing in row {row.idx or '[unknown]'}")
+                    bin_entry.stored_qty -= storage.delivery_qty
+                    bin_entry.area_use = calculate_area_use(
+                        storage.length, storage.width, storage.height, bin_entry.stored_qty
+                    )
+                    to_update = True
+                    break
+
+            if to_update:
+                item.save()
+            else:
+                frappe.throw(
+                    f"No matching bin with available quantity found for item {storage.item_code} "
+                    f"in warehouse '{storage.warehouse}' at bin '{storage.bin_location_name}' with pallet '{storage.pallet}'."
+                )
+
+    frappe.whitelist()
+    def before_cancel(self):
+        self.update_bin_status(canceled=True)
+
+        def calculate_area_use(length, width, height, stored_qty):
+            """Calculate the area use based on dimensions and stored quantity."""
+            if not height:
+                return length * width * stored_qty
+            return length * width * height * stored_qty
+
+        for storage in self.get('storage_details'):
+            to_update = False
+            item = frappe.get_doc("Item", storage.item_code)
+
+            for bin_entry in item.bin:
+                # Match all required conditions, including pallet
+                conditions_met = (
+                    (storage.batch_no == bin_entry.batch_no if storage.batch_no else True) and
+                    (storage.bin_location_name == bin_entry.bin_location) and
+                    (storage.warehouse == bin_entry.warehouse) and
+                    (convert_to_string(storage.expiry_date) == convert_to_string(bin_entry.expiry) if storage.expiry_date else True) and
+                    (storage.pallet == bin_entry.pallet if storage.pallet else True)
+                )
+
+                if conditions_met:
+                    bin_entry.stored_qty += storage.delivery_qty  # Revert the quantity
+                    bin_entry.area_use = calculate_area_use(
+                        storage.length, storage.width, storage.height, bin_entry.stored_qty
+                    )
+                    to_update = True
+                    break
+
+            if to_update:
+                item.save()
+            else:
+                frappe.throw(
+                    f"No matching bin entry found to revert for item {storage.item_code} "
+                    f"in warehouse '{storage.warehouse}' at bin '{storage.bin_location_name}' with pallet '{storage.pallet}'."
+                )
+    def update_bin_status(self, canceled=False):
+        for row in self.get("storage_details"):
+            bin_name = row.bin_location_name
+            item_code = row.item_code
+            pallet = row.pallet
+
+            if not bin_name:
+                frappe.throw(f"Bin location missing in row {row.idx or '[unknown]'}")
+
+            if not pallet:
+                frappe.throw(f"Pallet missing in row {row.idx or '[unknown]'}")
+
+            # Always use the correct parameters based on presence of pallet and item
+            existing_qty = frappe.db.sql("""
+                SELECT SUM(stored_qty)
+                FROM `tabitem bin location`
+                WHERE bin_location = %s AND parent = %s AND pallet = %s
+            """, (bin_name, item_code, pallet))[0][0] or 0
+
+            current_qty = flt(row.delivery_qty) * (-1 if not canceled else 1)
+
+            total_qty = flt(existing_qty + current_qty)
 
 
-        try:
-            pallet_doc = frappe.get_doc("Pallet", pallet)
-            capacity = flt(pallet_doc.capacity)
-        except frappe.DoesNotFoundError:
-            frappe.throw(f"Pallet '{pallet}' not found for bin '{bin_name}'")
+            try:
+                pallet_doc = frappe.get_doc("Pallet", pallet)
+                capacity = flt(pallet_doc.capacity)
+            except frappe.DoesNotFoundError:
+                frappe.throw(f"Pallet '{pallet}' not found for bin '{bin_name}'")
 
-        if total_qty <= 0:
-            status = "Vacant"
-        elif total_qty < capacity:
-            status = "Partially Occupied"
-        else:
-            status = "Occupied"
+            if total_qty <= 0:
+                status = "Vacant"
+            elif total_qty < capacity:
+                status = "Partially Occupied"
+            else:
+                status = "Occupied"
 
-        frappe.msgprint(f"Bin {bin_name} updated to {status}")
-        frappe.db.set_value("Bin Name", bin_name, "status", status)
+            frappe.msgprint(f"Bin {bin_name} updated to {status}")
+            frappe.db.set_value("Bin Name", bin_name, "status", status)
+    def update_pon_status(self):
+        order = frappe.get_doc('Preparation Order Note', self.prepration)
+        order.order_status="Completed"
+        order.save()
+        request = frappe.get_doc('Delivery Request', self.delivery_request)
+        request.doc_status="Completed"
+        request.save()
+
+
+
 
 
 
                 
 
-@frappe.whitelist()
-def on_submit(doc,method):
-        order = frappe.get_doc('Preparation Order Note', doc.prepration)
-        order.order_status="Completed"
-        order.save()
-        request = frappe.get_doc('Delivery Request', doc.delivery_request)
-        request.doc_status="Completed"
-        request.save()
-        # for itm in doc.get('storage_details'):
-        #     target_doc = frappe.get_doc("Item", itm.item_code)
-        #     target_doc.bin_display=[]
-        #     # rv= frappe.db.sql("""delete from `tabitem bin display` where parent="{0}" """.format(itm.item_code),as_dict=1)
-        #     stk= frappe.db.sql("""select * from `tabitem bin location` where parent="{0}"  and stored_qty !=0 order by expiry asc""".format(itm.item_code),as_dict=1)
-        #     for i in stk:
-        #         rw = target_doc.append('bin_display', {})
-        #         rw.warehouse = i.warehouse
-        #         rw.batch_no = i.batch_no
-        #         rw.bin_location = i.bin_location
-        #         rw.expiry = i.expiry
-        #         rw.stored_qty = i.stored_qty
-        #         rw.stored_in =i.stored_in
-        #         rw.sub_customer=i.sub_customer
-        #         rw.area_use=i.area_use
-        #         rw.length=i.length
-        #         rw.height=i.height
-        #         rw.width=i.width
-        #         rw.manufacturing_date=i.manufacturing_date
-        #     target_doc.save()
+
+      
 
 @frappe.whitelist()
 def get_item(customer):
@@ -87,146 +159,7 @@ def get_item(customer):
 
 
 
-@frappe.whitelist()
-def before_submit(doc, method):
-    update_bin_status(doc,canceled=True) 
-    def calculate_area_use(length, width, height, stored_qty):
-        """Calculate the area use based on dimensions and stored quantity."""
-        if not height:
-            return length * width * stored_qty
-        return length * width * height * stored_qty
 
-    for storage in doc.get('storage_details'):
-        to_update = False
-        item = frappe.get_doc("Item", storage.item_code)
-        
-        for bin_entry in item.bin:
-            # Match conditions
-            conditions_met = (
-                storage.batch_no == bin_entry.batch_no if storage.batch_no else True
-            ) and (
-                storage.bin_location_name == bin_entry.bin_location
-            ) and (
-                storage.warehouse == bin_entry.warehouse
-            ) and (
-                convert_to_string(storage.expiry_date) == convert_to_string(bin_entry.expiry) if storage.expiry_date else True
-            )
-
-            if conditions_met:
-                bin_entry.stored_qty -= storage.delivery_qty
-                bin_entry.area_use = calculate_area_use(
-                    storage.length, storage.width, storage.height, bin_entry.stored_qty
-                )
-                to_update = True
-                break
-        
-        if to_update:
-            item.save()
-        else:
-            frappe.throw(f"No matching bin entry found for item {storage.item_code} in storage details.")
-
-
-@frappe.whitelist()
-def before_cancel(doc, method):
-    update_bin_status(doc,operation=+1) 
-    def calculate_area_use(length, width, height, stored_qty):
-        """Calculate the area use based on dimensions and stored quantity."""
-        if not height:
-            return length * width * stored_qty
-        return length * width * height * stored_qty
-
-    for storage in doc.get('storage_details'):
-        to_update = False
-        item = frappe.get_doc("Item", storage.item_code)
-
-        for bin_entry in item.bin:
-            # Match conditions
-            conditions_met = (
-                storage.batch_no == bin_entry.batch_no if storage.batch_no else True
-            ) and (
-                storage.bin_location_name == bin_entry.bin_location
-            ) and (
-                storage.warehouse == bin_entry.warehouse
-            ) and (
-                convert_to_string(storage.expiry_date) == convert_to_string(bin_entry.expiry) if storage.expiry_date else True
-            )
-
-            if conditions_met:
-                bin_entry.stored_qty += storage.delivery_qty
-                bin_entry.area_use = calculate_area_use(
-                    storage.length, storage.width, storage.height, bin_entry.stored_qty
-                )
-                to_update = True
-                break
-
-        if to_update:
-            item.save()
-        else:
-            frappe.throw(f"No matching bin entry found for item {storage.item_code} in storage details.")
-
-@frappe.whitelist()
-def on_cancel(doc,method):
-    pass
-    # for itm in doc.get('storage_details'):
-    #     target_doc = frappe.get_doc("Item", itm.item_code)
-    #     target_doc.bin_display=[]
-    #     # rv= frappe.db.sql("""delete from `tabitem bin display` where parent="{0}" """.format(itm.item_code),as_dict=1)
-    #     stk= frappe.db.sql("""select * from `tabitem bin location` where parent="{0}"  and stored_qty !=0 order by expiry asc""".format(itm.item_code),as_dict=1)
-    #     for i in stk:
-    #         rw = target_doc.append('bin_display', {})
-    #         rw.warehouse = i.warehouse
-    #         rw.batch_no = i.batch_no
-    #         rw.bin_location = i.bin_location
-    #         rw.expiry = i.expiry
-    #         rw.stored_qty = i.stored_qty
-    #         rw.stored_in =i.stored_in
-    #         rw.sub_customer=i.sub_customer
-    #         rw.area_use=i.area_use
-    #         rw.length=i.length
-    #         rw.height=i.height
-    #         rw.width=i.width
-    #         rw.manufacturing_date=i.manufacturing_date
-    #     target_doc.save()
-
-
-# @frappe.whitelist()
-# def make_delivery_note(source_name, target_doc=None):
-# 	def set_missing_values(source, target):
-# 		delivery_note = frappe.get_doc(target)
-# 	doclist = get_mapped_doc("Preparation Order Note", source_name, {
-# 		"Preparation Order Note": {
-# 			"doctype": "Delivery Note",
-# 			"field_map": {
-# 				"customer": "customer",
-# 				# "warehouse":"set_warehouse",
-# 				"sub_customer":"sub_customer",
-# 				"required_date":"required_date",
-# 				"address_and_contact_details":"address_display"
-# 			}
-# 		},
-        # "Preparation Item Grid":{
-        # 	"doctype": "Delivery Note Item",
-        # 	"field_map": {
-        # 		"item_code": "item",
-        # 		"item_description": "description",
-        # 		"required_date": "required_date",
-        # 		"qty_required": "quantity_required"
-        # 	}
-        # },
-        # "Preparation Storage Details":{
-        # 	"doctype": "Note Storage details",
-        # 	"field_map": {
-        # 		"item": "item_code",
-        # 		"warehouse": "warehouse",
-        # 		"expiry_date": "expiry_date",
-        # 		"bin_location_name": "bin_location_name",
-        # 		"batch_no": "batch_no",
-        # 		"expiry_date":"expiry_date",
-        # 		"delivery_qty": "delivery_qty"
-        # 	}
-        # }
-    # }, target_doc, set_missing_values)
-    # return doclist
 
 
 frappe.whitelist()
@@ -239,14 +172,73 @@ def delete_stock_ledger(name):
 
 @frappe.whitelist()
 def background_recreate_d():
-    frappe.enqueue(recreating_all, timeout=4800, queue='long',
-    job_name='recreating_all', now=False)
+    frappe.enqueue(rebuild_bins_from_transactions, timeout=4800, queue='long',
+    job_name='rebuild_bins_from_transactions', now=False)
+
+
+
+
+def rebuild_bins_from_transactions():
+    """
+    Rebuilds the 'Item Bin' child table from:
+    1. Stock Entries (Material Receipt)
+    2. Delivery Notes
+    3. Stock Entries (excluding Material Receipt)
+    
+    Assumes 'tabItem Bin' has already been cleared via SQL manually.
+    """
+    frappe.msgprint("🔁 Starting bin rebuild from submitted transactions...")
+
+    # --- Step 1: Stock Entry (Material Receipt only) ---
+    # material_receipts = frappe.get_all(
+    #     "Stock Entry",
+    #     filters={"docstatus": 1, "stock_entry_type": "Material Receipt"}
+    # )
+    # for entry in material_receipts:
+    #     try:
+    #         doc = frappe.get_doc("Stock Entry", entry.name)
+    #         if hasattr(doc, "before_submit"):
+    #             doc.before_submit()
+    #         frappe.db.commit()
+    #     except Exception as e:
+    #         frappe.log_error(frappe.get_traceback(), f"❌ Error in Material Receipt: {entry.name}")
+
+    # --- Step 2: Delivery Notes ---
+    # delivery_notes = frappe.get_all("Delivery Note", filters={"docstatus": 1})
+    # for dn in delivery_notes:
+    #     try:
+    #         doc = frappe.get_doc("Delivery Note", dn.name)
+    #         if hasattr(doc, "before_submit"):
+    #             doc.before_submit()
+    #         frappe.db.commit()
+    #     except Exception as e:
+    #         frappe.log_error(frappe.get_traceback(), f"❌ Error in Delivery Note: {dn.name}")
+
+    # # --- Step 3: Stock Entry (all other types) ---
+    other_entries = frappe.get_all(
+        "Stock Entry",
+        filters=[["docstatus", "=", 1], ["stock_entry_type", "!=", "Material Receipt"]]
+    )
+    for entry in other_entries:
+        try:
+            doc = frappe.get_doc("Stock Entry", entry.name)
+            if hasattr(doc, "before_submit"):
+                doc.before_submit()
+            frappe.db.commit()
+        except Exception as e:
+            frappe.log_error(frappe.get_traceback(), f"❌ Error in Stock Entry (Other): {entry.name}")
+
+    # frappe.msgprint("✅ Bin rebuilding completed successfully.")
+
+
 @frappe.whitelist()
 def recreating_all():
 		sql="""select name from `tabDelivery Note` where docstatus=1  order by posting_date"""
 		for d in frappe.db.sql(sql,as_dict=1):
 			delev=frappe.get_doc("Delivery Note",d.name)
 			recreating(delev)
+
+
 
 
 def recreating(delev):
