@@ -114,6 +114,9 @@ doc_events = {
 		"on_update" : "semah.custom_script.item.item.on_update",
         "before_validate" : "semah.custom_script.item.item.validate",
 	},
+     "Batch": {
+		"validate" : "semah.custom_script.batch.batch.validate",
+	},
 	
 	
 }

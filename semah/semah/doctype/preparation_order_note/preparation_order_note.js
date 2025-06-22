@@ -71,10 +71,10 @@ frappe.ui.form.on('Preparation Order Note', {
             frm.trigger("customer")
 
         }
-        if (cur_frm.doc.docstatus != 1) {
-            frm.page.wrapper.find('use[href="#icon-printer"]').closest("button").hide();
+       // if (cur_frm.doc.docstatus != 1) {
+         //   frm.page.wrapper.find('use[href="#icon-printer"]').closest("button").hide();
 
-        }
+        //}
         cur_frm.get_field("item_grid").grid.cannot_add_rows = true
         cur_frm.fields_dict["item_grid"].grid.remove_rows_button.hide()
         cur_frm.fields_dict["item_grid"].grid.refresh();
@@ -566,11 +566,29 @@ frappe.ui.form.on('Preparation Storage Details', {
     },
     batch_no: function (frm, cdt, cdn) {
         var child = locals[cdt][cdn];
-        if (child.batch_no) {
-            setTimeout(function () { frappe.model.set_value(cdt, cdn, "bin_location_name", " ") }, 400);
+        if (child.batch_no != '') {
 
-            cur_frm.refresh_fields("storage_details")
-            cur_frm.refresh_fields("storage_details")
+            frappe.call({
+                method: "fetch_item_details",
+                doc: cur_frm.doc,
+                args:{"row":child,"value_type":"Batch"},
+                callback: function (r) {
+                    if (r.message) {
+                        cur_frm.refresh()
+
+                    }
+                }
+            });
+
+        } else {
+            frappe.model.set_value(cdt, cdn, "stored_qty", undefined)
+            frappe.model.set_value(cdt, cdn, "stored_in", undefined)
+
+            frappe.model.set_value(cdt, cdn, "height", undefined)
+            frappe.model.set_value(cdt, cdn, "width", undefined)
+            frappe.model.set_value(cdt, cdn, "length", undefined)
+            frappe.model.set_value(cdt, cdn, "area_used", undefined)
+
         }
 
 
@@ -582,7 +600,7 @@ frappe.ui.form.on('Preparation Storage Details', {
             frappe.call({
                 method: "fetch_item_details",
                 doc: cur_frm.doc,
-                args:{"row":child},
+                args:{"row":child,"value_type":"BIN"},
                 callback: function (r) {
                     if (r.message) {
                         cur_frm.refresh()

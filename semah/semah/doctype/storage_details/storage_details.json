@@ -21,7 +21,10 @@
   "area_used",
   "manufacture",
   "item_description",
-  "batch"
+  "batch",
+  "uom",
+  "customer_batch_id",
+  "note"
  ],
  "fields": [
   {
@@ -150,12 +153,30 @@
    "fieldtype": "Link",
    "label": "Pallet",
    "options": "Pallet"
+  },
+  {
+   "fieldname": "uom",
+   "fieldtype": "Data",
+   "label": "UOM",
+   "read_only": 1
+  },
+  {
+   "fieldname": "customer_batch_id",
+   "fieldtype": "Data",
+   "label": "Customer Batch ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Data",
+   "label": "Note",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-05-09 08:16:30.421780",
+ "modified": "2025-06-22 10:59:53.714371",
  "modified_by": "Administrator",
  "module": "Semah",
  "name": "Storage details",

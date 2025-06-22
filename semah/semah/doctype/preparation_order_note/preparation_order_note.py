@@ -85,11 +85,17 @@ class PreparationOrderNote(Document):
 			if bin_name:
 				bin_set.add(bin_name)
 	@frappe.whitelist()
-	def fetch_item_details(self, row):
+	def fetch_item_details(self, row,value_type):
 		for d in self.storage_details:
 			if str(d.idx) == str(row.get("idx")):
+				if value_type == "Batch":
+					cond = "AND c.batch_no = %s"
+					param = d.batch_no
+				else:
+					cond = "AND c.bin_location = %s"
+					param = d.bin_location_name
 
-				data = frappe.db.sql("""
+				data = frappe.db.sql(f"""
 					SELECT
 						p.stock_uom, p.item_name, p.description,
 						p.name AS item_code, c.batch_no AS batch, c.warehouse,
@@ -97,9 +103,10 @@ class PreparationOrderNote(Document):
 						c.area_use, c.stored_qty, c.manufacturing_date, c.pallet
 					FROM `tabitem bin location` c
 					INNER JOIN `tabItem` p ON c.parent = p.name
-					WHERE c.stored_qty > 0 AND c.bin_location = %s
+					WHERE c.stored_qty > 0 {cond}
 					LIMIT 1
-				""", (d.bin_location_name,), as_dict=1)
+				""", (param,), as_dict=1)
+
 
 				if data:
 					item = data[0]

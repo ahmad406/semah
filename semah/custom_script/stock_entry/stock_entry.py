@@ -372,10 +372,17 @@ class CustomStockEntry(StockEntry):
                         doc.save()
                     itm.pallet=plt
     def get_series_number(self):
-        parts = self.name.split('-')
-        year = parts[-2]
-        number = parts[-1]
-        combined = int(year + number)
+        combined=None
+        if self.amended_from:
+            parts = self.name.split('-')
+            year = parts[-3]
+            number = parts[-2]
+            combined = int(year + number)
+        else:
+            parts = self.name.split('-')
+            year = parts[-2]
+            number = parts[-1]
+            combined = int(year + number)
         return(combined) 
     @frappe.whitelist()
     def get_pallet(self,bin,expiry):
@@ -567,6 +574,10 @@ class CustomStockEntry(StockEntry):
                 row.length = length
                 row.width = width
                 row.height = height
+                row.uom = itm.uom
+                row.customer_batch_id = itm.customer_batch_id
+                row.note = itm.note
+
                 row.batch_no = itm.batch_no
                 row.batch = itm.batch_no
                 row.expiry = expiry_date
