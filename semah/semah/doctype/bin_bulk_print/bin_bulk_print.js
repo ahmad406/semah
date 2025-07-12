@@ -23,5 +23,17 @@ frappe.ui.form.on('Bin Bulk Print', {
 				}
             }
         });
+	},
+	bin_row:function(frm){
+
+		frappe.call({
+			method: "set_bin",
+			doc: cur_frm.doc,
+            callback: function(r) {
+				if (r.message) {
+					cur_frm.refresh()
+				}
+            }
+        });
 	}
 });

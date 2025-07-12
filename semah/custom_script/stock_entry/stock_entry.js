@@ -100,12 +100,15 @@ frappe.ui.form.on("Stock Entry", {
         });
         cur_frm.set_query("bin_location", "storage_details", function (frm, cdt, cdn) {
             const selected_bins = [];
+            if(!cur_frm.doc.is_bulk_entry){
 
-            cur_frm.doc.storage_details.forEach(row => {
-                if (row.bin_location) {
-                    selected_bins.push(row.bin_location);
-                }
-            });
+                cur_frm.doc.storage_details.forEach(row => {
+                    if (row.bin_location) {
+                        selected_bins.push(row.bin_location);
+                    }
+                });
+            }
+
             var child = locals[cdt][cdn];
             return {
                 query: 'semah.custom_script.stock_entry.stock_entry.get_bin',
@@ -113,7 +116,8 @@ frappe.ui.form.on("Stock Entry", {
                     "selected_bins": selected_bins,
                     "item": child.item_code,
                     "expiry": child.expiry,
-                    "qty":child.stored_qty
+                    "qty":child.stored_qty,
+                    "bin_row":cur_frm.doc.bin_row
                     // ,"warehouse":child.t_ware_house
                 }
 
@@ -417,6 +421,12 @@ frappe.ui.form.on("Stock Entry", {
             },
         });
         cur_frm.refresh_fields("storage_details")
+        if (cur_frm.doc.stock_entry_type=="Transfer to Quarantine"){
+            cur_frm.set_df_property("storage_details","read_only",1)
+        }
+        else{
+            cur_frm.set_df_property("storage_details","read_only",0)
+        }
         calculateTotalStoredQuantity2();
     },
 
@@ -520,7 +530,7 @@ frappe.ui.form.on('Storage details', {
     // },
     bin_location: function (frm, cdt, cdn) {
         var storage = locals[cdt][cdn]
-        if (storage.bin_location) {
+        if (storage.bin_location && !cur_frm.doc.is_bulk_entry) {
 
             frappe.call({
                 method: "get_pallet",

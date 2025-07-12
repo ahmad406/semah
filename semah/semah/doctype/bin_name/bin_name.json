@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "warehouse",
+  "bin_row",
   "bin_name",
   "status"
  ],
@@ -31,11 +32,17 @@
    "label": "Status",
    "options": "Vacant\nPartially Occupied\nOccupied",
    "read_only": 1
+  },
+  {
+   "fieldname": "bin_row",
+   "fieldtype": "Data",
+   "label": "Bin Row",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-30 17:19:07.419468",
+ "modified": "2025-07-06 09:11:42.129604",
  "modified_by": "Administrator",
  "module": "Semah",
  "name": "Bin Name",

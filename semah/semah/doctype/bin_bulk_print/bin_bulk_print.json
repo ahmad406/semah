@@ -6,6 +6,7 @@
  "engine": "InnoDB",
  "field_order": [
   "company",
+  "bin_row",
   "warehouse",
   "section_break_3",
   "bulk_bin"
@@ -33,11 +34,17 @@
    "fieldtype": "Table",
    "label": "Bulk Bin",
    "options": "Bulk Bin"
+  },
+  {
+   "fieldname": "bin_row",
+   "fieldtype": "Link",
+   "label": "Bin Row",
+   "options": "Bin Row"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-19 17:58:32.192016",
+ "modified": "2025-07-06 09:51:38.573830",
  "modified_by": "Administrator",
  "module": "Semah",
  "name": "Bin Bulk Print",

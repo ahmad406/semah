@@ -6,6 +6,8 @@
  "engine": "InnoDB",
  "field_order": [
   "item",
+  "item_name",
+  "description",
   "warehouse",
   "pallet",
   "batch_no",
@@ -22,8 +24,6 @@
   "height",
   "width",
   "length",
-  "item_name",
-  "description",
   "uom",
   "required_date",
   "sub_customer"
@@ -42,7 +42,6 @@
    "columns": 2,
    "fieldname": "warehouse",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "Warehouse",
    "options": "Warehouse",
    "read_only": 1
@@ -154,15 +153,16 @@
    "read_only": 1
   },
   {
+   "fetch_from": "item.item_name",
    "fieldname": "item_name",
    "fieldtype": "Data",
-   "in_list_view": 1,
    "label": "item name",
    "read_only": 1
   },
   {
    "fieldname": "description",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "description",
    "read_only": 1
   },
@@ -188,7 +188,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-05-31 15:57:48.302478",
+ "modified": "2025-07-07 19:55:09.665158",
  "modified_by": "Administrator",
  "module": "Semah",
  "name": "Preparation Storage Details barcode",

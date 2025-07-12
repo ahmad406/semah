@@ -72,18 +72,18 @@ class PreparationOrderNote(Document):
 	
 	def validate_duplicate_bin_locations(self):
 		"""Validate that there are no duplicate bin_location_name values in the storage_details table."""
+		if not self.is_bulk_entry:
+			bin_set = set()
+			for row in self.storage_details:
+				bin_name = (row.bin_location_name or "").strip().lower()
 
-		bin_set = set()
-		for row in self.storage_details:
-			bin_name = (row.bin_location_name or "").strip().lower()
-
-			if bin_name in bin_set:
-				frappe.throw(
-					_("Duplicate Bin Location found: {0}").format(row.bin_location_name),
-					title=_("Validation Error")
-				)
-			if bin_name:
-				bin_set.add(bin_name)
+				if bin_name in bin_set:
+					frappe.throw(
+						_("Duplicate Bin Location found: {0}").format(row.bin_location_name),
+						title=_("Validation Error")
+					)
+				if bin_name:
+					bin_set.add(bin_name)
 	@frappe.whitelist()
 	def fetch_item_details(self, row,value_type):
 		for d in self.storage_details:
@@ -215,7 +215,7 @@ class PreparationOrderNote(Document):
 				row.batch_no = data.get("batch")
 
 				req_item = get_required_qty(self, data.get("item_code"))
-				row.item_description = data.get("description")
+				row.description = data.get("description")
 				row.qty_required = req_item.qty_required if req_item else 0
 				self.qty=0
 				self.barcode=None

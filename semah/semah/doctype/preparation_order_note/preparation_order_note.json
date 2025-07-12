@@ -10,6 +10,7 @@
   "order_status",
   "customer",
   "sub_customer",
+  "is_bulk_entry",
   "delivery_request",
   "warehouse",
   "column_break_4",
@@ -244,12 +245,19 @@
    "fieldtype": "Table",
    "label": "scanned Items",
    "options": "Preparation Storage Details barcode"
+  },
+  {
+   "default": "0",
+   "fetch_from": "customer.is_bulk_entry",
+   "fieldname": "is_bulk_entry",
+   "fieldtype": "Check",
+   "label": "Is Bulk Entry"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-06-18 19:11:14.137876",
+ "modified": "2025-06-28 12:57:03.808712",
  "modified_by": "Administrator",
  "module": "Semah",
  "name": "Preparation Order Note",

@@ -112,12 +112,13 @@ class CustomStockEntry(StockEntry):
                 )
 
     def validate_unique_bins(self):
-        seen_bins = set()
-        for row in self.storage_details:
-            if row.bin_location:
-                if row.bin_location in seen_bins:
-                    frappe.throw(f"Bin '{row.bin_location}' is repeated in storage details. Each bin must be unique.")
-                seen_bins.add(row.bin_location)
+        if not self.is_bulk_entry:
+            seen_bins = set()
+            for row in self.storage_details:
+                if row.bin_location:
+                    if row.bin_location in seen_bins:
+                        frappe.throw(f"Bin '{row.bin_location}' is repeated in storage details. Each bin must be unique.")
+                    seen_bins.add(row.bin_location)
 
     @frappe.whitelist()
     def get_warehouse_of_customer(self):
@@ -542,6 +543,53 @@ class CustomStockEntry(StockEntry):
     @frappe.whitelist()
     def updatestorage(self, bin):
         self.storage_details = []
+        if self.stock_entry_type=="Material Receipt":
+            self.update_material_reciept_storage(bin)
+        if self.stock_entry_type=="Transfer to Quarantine":
+            self.update_quarantine_storage()
+
+    def update_quarantine_storage(self):
+        for itm in self.items:
+            data = self.get_item_stock_details(itm)
+            if not data:
+                continue  
+
+            row = self.append("storage_details", {})
+            row.item_code = itm.item_code
+            row.item_name = itm.item_name
+            row.sub_customer = self.sub_customer
+            row.length = data.get("length")
+            row.width = data.get("width")
+            row.height = data.get("height")
+            row.uom = itm.uom
+            row.customer_batch_id = itm.customer_batch_id
+            row.note = itm.note
+
+            row.batch_no = itm.batch_no
+            row.expiry = data.get("expiry")
+            row.manufacture = data.get("manufacturing_date")
+            row.stored_qty = data.get("stored_qty")
+
+            row.t_ware_house = data.get("warehouse")
+            row.pallet = data.get("pallet")
+            row.area_used = data.get("area_use")
+            row.bin_location = data.get("bin_location")
+
+    def get_item_stock_details(self, itm):
+        sql = """
+            SELECT parent item_code, length, width, height, manufacturing_date,
+                sub_customer, stored_qty, expiry, batch_no, bin_location,
+                warehouse, pallet, area_use
+            FROM `tabitem bin location`
+            WHERE parent = %s AND batch_no = %s AND stored_qty > 0
+        """
+        data = frappe.db.sql(sql, (itm.item_code, itm.batch_no), as_dict=True)
+        return data[0] if data else None
+
+
+
+
+    def update_material_reciept_storage(self,bin):
 
         for itm in self.items:
             item_code = itm.item_code
@@ -899,10 +947,11 @@ def get_bin(doctype, txt, searchfield, start, page_len, filters):
     item = filters.get('item')
     expiry = filters.get('expiry')
     qty = filters.get('qty')
+    bin_row = filters.get('bin_row')
 
     selected_bins = filters.get('selected_bins') or []
+    bin_row_condition = "AND b.bin_row = %s" if bin_row else ""
 
-    # Prepare placeholders for NOT IN
     placeholders = ','.join(['%s'] * len(selected_bins)) if selected_bins else None
     condition1 = f"AND c.bin_location NOT IN ({placeholders})" if selected_bins else ""
     condition2 = f"AND name NOT IN ({placeholders})" if selected_bins else ""
@@ -914,7 +963,7 @@ def get_bin(doctype, txt, searchfield, start, page_len, filters):
             FROM `tabPallet` p
             INNER JOIN `tabitem bin location` c ON p.name = c.pallet
             WHERE c.parent = %s AND c.expiry = %s
-              AND p.capacity - c.stored_qty >= %s AND c.stored_qty>0
+              AND p.capacity - c.stored_qty >= %s AND c.stored_qty > 0
               {condition1}
 
             UNION
@@ -925,14 +974,19 @@ def get_bin(doctype, txt, searchfield, start, page_len, filters):
             WHERE status = 'Vacant'
               {condition2}
         ) AS all_bins
-        WHERE bin_location LIKE %s
+        INNER JOIN `tabBin Name` b ON b.name = all_bins.bin_location
+        WHERE all_bins.bin_location LIKE %s
+        {bin_row_condition}
         LIMIT %s OFFSET %s
     """
 
     args = [item, expiry, qty]
     if selected_bins:
-        args += selected_bins + selected_bins  # for both NOT IN clauses
-    args += [f"%{txt}%", page_len, start]
+        args += selected_bins + selected_bins  
+    args.append(f"%{txt}%")
+    if bin_row:
+        args.append(bin_row)
+    args += [page_len, start]
 
     return frappe.db.sql(query, args, as_dict=False)
 

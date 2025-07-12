@@ -1,0 +1,43 @@
+{
+ "actions": [],
+ "autoname": "field:bin_row",
+ "creation": "2025-07-06 09:48:44.703117",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "bin_row"
+ ],
+ "fields": [
+  {
+   "fieldname": "bin_row",
+   "fieldtype": "Data",
+   "label": "Bin Row",
+   "unique": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-07-06 09:49:04.043436",
+ "modified_by": "Administrator",
+ "module": "Semah",
+ "name": "Bin Row",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
