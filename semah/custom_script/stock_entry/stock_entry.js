@@ -150,7 +150,7 @@ frappe.ui.form.on("Stock Entry", {
             }
         });
          cur_frm.set_query("uom", "items", function (frm, cdt, cdn) {
-            d=local[cdt][cdn]
+            d=locals[cdt][cdn]
             return {
                 query: 'semah.custom_script.stock_entry.stock_entry.get_uom_filter',
                 filters: { "item_code": d.item_code }
