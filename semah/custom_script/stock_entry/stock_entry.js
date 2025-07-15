@@ -2,7 +2,6 @@ var item_list = []
 var bin_location = []
 var batch;
 
-var uomlist;
 
 frappe.ui.form.on("Stock Entry", {
 
@@ -150,18 +149,18 @@ frappe.ui.form.on("Stock Entry", {
                 ]
             }
         });
-        // cur_frm.cscript.onload = function (frm) {
-        cur_frm.set_query("uom", "items", function () {
+         cur_frm.set_query("uom", "items", function (frm, cdt, cdn) {
+            d=local[cdt][cdn]
             return {
+                query: 'semah.custom_script.stock_entry.stock_entry.get_uom_filter',
+                filters: { "item_code": d.item_code }
 
-                filters: [
-                    ['UOM', 'name', 'in', uomlist],
-                ]
-                // filters: { "customer_": cur_frm.doc.customer_nm,"sub":cur_frm.doc.customer_nm }
             }
-
         });
-        // }
+
+
+
+       
 
         cur_frm.cscript.onload = function (frm) {
             cur_frm.set_query("item_code", "items", function () {
@@ -716,19 +715,7 @@ frappe.ui.form.on("Stock Entry Detail", "form_render", function (frm, cdt, cdn) 
         cur_frm.fields_dict.items.grid.update_docfield_property("additional_cost", "hidden", 1);
         cur_frm.fields_dict.items.grid.update_docfield_property("valuation_rate", "hidden", 1);
         cur_frm.fields_dict.items.grid.update_docfield_property("accounting", "hidden", 1);
-
-        frappe.call({
-            method: "semah.custom_script.stock_entry.stock_entry.get_item_uom",
-            async: false,
-            args: {
-                'item_code': child.item_code
-            },
-            callback: function (r) {
-                console.log(r.message)
-                uomlist = r.message
-
-            }
-        })
+      
         cur_frm.refresh_fields("storage_details")
     }
     // cur_frm.refresh_fields('items')

@@ -899,14 +899,6 @@ def get_batch_no(doctype, txt, searchfield, start, page_len, filters):
 			limit %(start)s, %(page_len)s""".format(cond, search_columns = search_columns,
 			search_cond = search_cond, match_conditions=get_match_cond(doctype)), args)
 
-@frappe.whitelist()
-def get_item_uom(item_code):
-    uomlist=[]
-    raw= frappe.db.sql(""" select uom from `tabUOM Conversion Detail` where parent="{0}" """.format(item_code),as_dict=1)
-    for i in raw:
-        uomlist.append(i.uom)
-    return uomlist 
-
 
 import datetime
 
@@ -915,7 +907,33 @@ def convert_to_string(date):
         return date.strftime('%Y-%m-%d')
     else:
         return date
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_uom_filter(doctype, txt, searchfield, start, page_len, filters):
+    item = filters.get('item_code')
     
+
+    if not item:
+        return []
+
+    args = {
+        'start': start,
+        'page_len': page_len,
+        'item': item,
+        'txt': f"%{txt}%"
+    }
+
+    return frappe.db.sql("""
+                         
+    select uom from `tabUOM Conversion Detail`
+                         
+    
+        WHERE parent = %(item)s AND uom LIKE %(txt)s
+        LIMIT %(start)s, %(page_len)s
+    """, args)
+
+
+
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
 def pallet_filter(doctype, txt, searchfield, start, page_len, filters):
