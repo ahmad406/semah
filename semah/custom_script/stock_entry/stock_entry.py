@@ -411,6 +411,16 @@ class CustomStockEntry(StockEntry):
 
             if not bin_name:
                 frappe.throw(f"Bin location missing in row {row.idx or '[unknown]'}")
+            existing_pallets = frappe.db.sql("""
+            SELECT DISTINCT pallet 
+            FROM `tabitem bin location`
+            WHERE bin_location = %s AND pallet IS NOT NULL
+        """, (bin_name,), as_dict=1)
+
+            for existing in existing_pallets:
+                if existing.pallet and existing.pallet != pallet:
+                    frappe.throw(f"Bin '{bin_name}' already contains a different pallet: '{existing.pallet}'. Only one pallet is allowed per bin.")
+
 
             # Always use the correct parameters based on presence of pallet and item
             existing_qty = frappe.db.sql("""
