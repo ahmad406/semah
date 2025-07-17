@@ -37,6 +37,7 @@
   "total_delivery_quantity",
   "scan_barcode_section",
   "barcode",
+  "actual_qty",
   "qty",
   "insert",
   "scanned_items",
@@ -233,7 +234,7 @@
   {
    "fieldname": "qty",
    "fieldtype": "Float",
-   "label": "Qty"
+   "label": "Qty Required"
   },
   {
    "fieldname": "insert",
@@ -252,12 +253,18 @@
    "fieldname": "is_bulk_entry",
    "fieldtype": "Check",
    "label": "Is Bulk Entry"
+  },
+  {
+   "fieldname": "actual_qty",
+   "fieldtype": "Float",
+   "label": "Actual Qty",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-06-28 12:57:03.808712",
+ "modified": "2025-07-17 11:01:22.053601",
  "modified_by": "Administrator",
  "module": "Semah",
  "name": "Preparation Order Note",

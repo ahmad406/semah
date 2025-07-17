@@ -194,6 +194,10 @@ class PreparationOrderNote(Document):
 			if insert:
 				if not self.qty:
 					frappe.throw("Qty Required!")
+				if self.qty > self.actual_qty:
+					frappe.throw("Required Quantity cannot be greater than actual quantity.")
+					return 
+
 				# item = frappe.get_doc('Item', data['item_code'])
 
 				row = self.append("scanned_items", {})
@@ -221,6 +225,7 @@ class PreparationOrderNote(Document):
 				self.barcode=None
 			else:
 				self.qty=data.get("stored_qty")
+				self.actual_qty=data.get("stored_qty")
 
 
 			return data
@@ -267,14 +272,13 @@ def get_delivery_request(customer):
 def update_row(item,batch,warehouse,bin_location_name):
 	data=frappe.db.sql(""" select stored_qty,stored_in,length,height,width,area_use,sub_customer from `tabitem bin location` where parent="{0}"  and batch_no="{1}" and warehouse="{2}" and bin_location='{3}' """.format(item,batch,warehouse,bin_location_name),as_dict=True)
 	return data
-
 @frappe.whitelist()
 def get_stock(item):
 	is_batch=is_batch_item(item)
 	if is_batch:
-		stk= frappe.db.sql("""select * from `tabitem bin location` where parent="{0}"  and stored_qty!=0 and expiry>=now() order by expiry asc""".format(item),as_dict=1)
+		stk= frappe.db.sql("""select * from `tabitem bin location` where parent="{0}"  and stored_qty!=0 and expiry>=now() order by expiry asc,stored_qty ASC""".format(item),as_dict=1)
 	else:
-		stk= frappe.db.sql("""select * from `tabitem bin location` where parent="{0}"  and stored_qty!=0 """.format(item),as_dict=1)
+		stk= frappe.db.sql("""select * from `tabitem bin location` where parent="{0}"  and stored_qty!=0 order by stored_qty ASC """.format(item),as_dict=1)
 	return stk
 
 def is_batch_item(item_code):
