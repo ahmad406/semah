@@ -262,6 +262,7 @@ class CustomStockEntry(StockEntry):
     @frappe.whitelist()
     def before_cancel(self):
         self.update_bin_status(not_canceled=False)
+        self.delete_pallet()
         def revert_bin_location(target_doc, bin_details):
             """
             Reverts bin location and warehouse back to original values stored in t_bin and t_warehouse.
@@ -372,6 +373,19 @@ class CustomStockEntry(StockEntry):
                         doc.warehouse=itm.t_ware_house
                         doc.save()
                     itm.pallet=plt
+    def delete_pallet(self):
+        if self.stock_entry_type == 'Material Receipt':
+            for itm in self.get('storage_details'):
+                if itm.pallet:
+                    try:
+                        # Ensure pallet exists before deletion
+                        pl = frappe.get_doc("Pallet", itm.pallet)
+                        pl.delete()
+                    except frappe.DoesNotExistError:
+                        frappe.msgprint(f"Pallet {itm.pallet} not found, skipping.")
+                    except Exception as e:
+                        frappe.throw(f"Error deleting pallet {itm.pallet}: {e}")
+
     def get_series_number(self):
         combined=None
         if self.amended_from:
