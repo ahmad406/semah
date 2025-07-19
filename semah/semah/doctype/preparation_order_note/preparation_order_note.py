@@ -224,7 +224,9 @@ class PreparationOrderNote(Document):
 				self.qty=0
 				self.barcode=None
 			else:
-				self.qty=data.get("stored_qty")
+				# self.qty=data.get("stored_qty")
+				self.qty=0
+
 				self.actual_qty=data.get("stored_qty")
 
 
