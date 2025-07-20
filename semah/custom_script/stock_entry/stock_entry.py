@@ -398,22 +398,47 @@ class CustomStockEntry(StockEntry):
             year = parts[-2]
             number = parts[-1]
             combined = int(year + number)
-        return(combined) 
+        return(combined)
+     
     @frappe.whitelist()
-    def get_pallet(self,bin,expiry):
-        if bin:
-            dt = frappe.db.sql("""
-                    SELECT * FROM `tabitem bin location`
-                    WHERE bin_location = %s and expiry=%s AND stored_qty > 0 
-                """, (bin,expiry), as_dict=1)
-            if len(dt) > 1:
-                    frappe.throw(f"Data Integrity Error: Multiple active entries for bin '{bin}' with stored_qty > 0")
+    def get_pallet(self, bin,item_code,expiry=None):
 
-            if not dt:
+        item = frappe.get_doc("Item", item_code)
+        has_expiry = item.has_expiry_date
+
+        if has_expiry and not expiry:
+            frappe.throw(f"Expiry date is required for item '{item_code}' in bin '{bin}' because it has expiry enabled.")
+
+        if expiry:
+            dt = frappe.db.sql("""
+                SELECT * FROM  `tabitem bin location`
+                WHERE bin_location = %s AND expiry = %s AND stored_qty > 0
+            """, (bin, expiry), as_dict=1)
+        else:
+            dt = frappe.db.sql("""
+                SELECT * FROM  `tabitem bin location`
+                WHERE bin_location = %s AND stored_qty > 0
+            """, (bin,), as_dict=1)
+
+        if len(dt) > 1:
+            frappe.throw(f"Data Integrity Error: Multiple active entries for bin '{bin}' with stored_qty > 0")
+
+        if not dt:
+            return ""
+
+        pallet = dt[0].get("pallet")
+        if pallet:
+            capacity = frappe.db.get_value("Pallet", pallet, "capacity")
+            used_qty = frappe.db.sql("""
+                SELECT SUM(stored_qty)
+                FROM `tabitem bin location`
+                WHERE pallet = %s
+            """, (pallet,), as_list=1)[0][0] or 0
+
+            if flt(used_qty) >= flt(capacity):
                 return ""
-            else:
-                return dt[0].pallet
-         
+
+        return dt[0].pallet
 
 
 
@@ -983,6 +1008,8 @@ WHERE capacity > stored_qty
         'page_len': page_len
     }, as_dict=False)
 
+
+
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
 def get_bin(doctype, txt, searchfield, start, page_len, filters):
@@ -990,13 +1017,22 @@ def get_bin(doctype, txt, searchfield, start, page_len, filters):
     expiry = filters.get('expiry')
     qty = filters.get('qty')
     bin_row = filters.get('bin_row')
-
     selected_bins = filters.get('selected_bins') or []
+
+    if not item:
+        frappe.throw(_("Item is required"))
+
+    has_expiry = frappe.db.get_value("Item", item, "has_expiry_date")
+    if has_expiry and not expiry:
+        frappe.throw(_("Expiry date is required for items with expiry"))
+
     bin_row_condition = "AND b.bin_row = %s" if bin_row else ""
 
     placeholders = ','.join(['%s'] * len(selected_bins)) if selected_bins else None
     condition1 = f"AND c.bin_location NOT IN ({placeholders})" if selected_bins else ""
     condition2 = f"AND name NOT IN ({placeholders})" if selected_bins else ""
+
+    expiry_condition = "AND c.expiry = %s" if expiry else ""
 
     query = f"""
         SELECT DISTINCT bin_location, status_type, bal FROM (
@@ -1004,7 +1040,8 @@ def get_bin(doctype, txt, searchfield, start, page_len, filters):
             SELECT c.bin_location, "Partial" status_type, p.capacity - c.stored_qty AS bal
             FROM `tabPallet` p
             INNER JOIN `tabitem bin location` c ON p.name = c.pallet
-            WHERE c.parent = %s AND c.expiry = %s
+            WHERE c.parent = %s
+              {expiry_condition}
               AND p.capacity - c.stored_qty >= %s AND c.stored_qty > 0
               {condition1}
 
@@ -1022,15 +1059,69 @@ def get_bin(doctype, txt, searchfield, start, page_len, filters):
         LIMIT %s OFFSET %s
     """
 
-    args = [item, expiry, qty]
+    args = [item]
+    if expiry:
+        args.append(expiry)
+    args.append(qty)
+
     if selected_bins:
-        args += selected_bins + selected_bins  
+        args += selected_bins + selected_bins
+
     args.append(f"%{txt}%")
     if bin_row:
         args.append(bin_row)
     args += [page_len, start]
 
     return frappe.db.sql(query, args, as_dict=False)
+
+# @frappe.whitelist()
+# @frappe.validate_and_sanitize_search_inputs
+# def get_bin(doctype, txt, searchfield, start, page_len, filters):
+#     item = filters.get('item')
+#     expiry = filters.get('expiry')
+#     qty = filters.get('qty')
+#     bin_row = filters.get('bin_row')
+
+#     selected_bins = filters.get('selected_bins') or []
+#     bin_row_condition = "AND b.bin_row = %s" if bin_row else ""
+
+#     placeholders = ','.join(['%s'] * len(selected_bins)) if selected_bins else None
+#     condition1 = f"AND c.bin_location NOT IN ({placeholders})" if selected_bins else ""
+#     condition2 = f"AND name NOT IN ({placeholders})" if selected_bins else ""
+
+#     query = f"""
+#         SELECT DISTINCT bin_location, status_type, bal FROM (
+#             -- From Item Bin Location where pallet has space
+#             SELECT c.bin_location, "Partial" status_type, p.capacity - c.stored_qty AS bal
+#             FROM `tabPallet` p
+#             INNER JOIN `tabitem bin location` c ON p.name = c.pallet
+#             WHERE c.parent = %s AND c.expiry = %s
+#               AND p.capacity - c.stored_qty >= %s AND c.stored_qty > 0
+#               {condition1}
+
+#             UNION
+
+#             -- From Bin Name where status is Vacant
+#             SELECT name as bin_location, "Vacant" status_type, 0 AS bal
+#             FROM `tabBin Name`
+#             WHERE status = 'Vacant'
+#               {condition2}
+#         ) AS all_bins
+#         INNER JOIN `tabBin Name` b ON b.name = all_bins.bin_location
+#         WHERE all_bins.bin_location LIKE %s
+#         {bin_row_condition}
+#         LIMIT %s OFFSET %s
+#     """
+
+#     args = [item, expiry, qty]
+#     if selected_bins:
+#         args += selected_bins + selected_bins  
+#     args.append(f"%{txt}%")
+#     if bin_row:
+#         args.append(bin_row)
+#     args += [page_len, start]
+
+#     return frappe.db.sql(query, args, as_dict=False)
 
 
 
