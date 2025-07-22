@@ -363,12 +363,16 @@ class CustomStockEntry(StockEntry):
             import re
             for itm in self.get('storage_details'):
                 if not itm.pallet:
+                    capacity=frappe.db.get_value('Item', itm.item_code, 'qty_per_pallet')
+                    if capacity <= 0:
+                        frappe.throw(f"Item {itm.item_code} must have a valid 'Qty per Pallet' greater than 0.")
+
                     plt="{}{}".format(self.get_series_number(),itm.idx)
                     if not frappe.db.exists("Pallet", plt):
                         
                         doc=frappe.new_doc("Pallet")
                         doc.pallet=plt
-                        doc.capacity= frappe.db.get_value('Item', itm.item_code, 'qty_per_pallet')
+                        doc.capacity= capacity
                         doc.item=itm.item_code
                         doc.warehouse=itm.t_ware_house
                         doc.save()
