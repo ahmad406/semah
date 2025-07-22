@@ -12,6 +12,8 @@ from erpnext.stock.doctype.stock_entry.stock_entry import  StockEntry
 from erpnext.stock.doctype.stock_entry.stock_entry import *
 
 class CustomStockEntry(StockEntry):
+   
+
     def validate(self):
         self.pro_doc = frappe._dict()
         if self.work_order:
@@ -112,7 +114,7 @@ class CustomStockEntry(StockEntry):
                 )
 
     def validate_unique_bins(self):
-        if not self.is_bulk_entry:
+        if not self.bulk_stock_entry:
             seen_bins = set()
             for row in self.storage_details:
                 if row.bin_location:
@@ -447,53 +449,54 @@ class CustomStockEntry(StockEntry):
 
 
     def update_bin_status(self, not_canceled=True):
-        for row in self.get("storage_details"):
-            bin_name = row.bin_location
-            item_code = row.item_code
-            pallet = row.pallet
+        if not self.bulk_stock_entry:
+            for row in self.get("storage_details"):
+                bin_name = row.bin_location
+                item_code = row.item_code
+                pallet = row.pallet
 
-            if not bin_name:
-                frappe.throw(f"Bin location missing in row {row.idx or '[unknown]'}")
-            existing_pallets = frappe.db.sql("""
-            SELECT DISTINCT pallet 
-            FROM `tabitem bin location`
-            WHERE bin_location = %s AND pallet IS NOT NULL
-        """, (bin_name,), as_dict=1)
-
-            for existing in existing_pallets:
-                if existing.pallet and existing.pallet != pallet:
-                    frappe.throw(f"Bin '{bin_name}' already contains a different pallet: '{existing.pallet}'. Only one pallet is allowed per bin.")
-
-
-            # Always use the correct parameters based on presence of pallet and item
-            existing_qty = frappe.db.sql("""
-                SELECT SUM(stored_qty)
+                if not bin_name:
+                    frappe.throw(f"Bin location missing in row {row.idx or '[unknown]'}")
+                existing_pallets = frappe.db.sql("""
+                SELECT DISTINCT pallet 
                 FROM `tabitem bin location`
-                WHERE bin_location = %s AND parent = %s AND pallet = %s
-            """, (bin_name, item_code, pallet))[0][0] or 0
+                WHERE bin_location = %s AND pallet IS NOT NULL
+            """, (bin_name,), as_dict=1)
 
-            current_qty = flt(row.stored_qty) if not_canceled else flt(row.stored_qty) * -1
-            total_qty = flt(existing_qty + current_qty)
+                for existing in existing_pallets:
+                    if existing.pallet and existing.pallet != pallet:
+                        frappe.throw(f"Bin '{bin_name}' already contains a different pallet: '{existing.pallet}'. Only one pallet is allowed per bin.")
 
-            if not pallet:
-                frappe.db.set_value("Bin Name", bin_name, "status", "Vacant")
-                continue
 
-            try:
-                pallet_doc = frappe.get_doc("Pallet", pallet)
-                capacity = flt(pallet_doc.capacity)
-            except frappe.DoesNotFoundError:
-                frappe.throw(f"Pallet '{pallet}' not found for bin '{bin_name}'")
+                # Always use the correct parameters based on presence of pallet and item
+                existing_qty = frappe.db.sql("""
+                    SELECT SUM(stored_qty)
+                    FROM `tabitem bin location`
+                    WHERE bin_location = %s AND parent = %s AND pallet = %s
+                """, (bin_name, item_code, pallet))[0][0] or 0
 
-            if total_qty <= 0:
-                status = "Vacant"
-            elif total_qty < capacity:
-                status = "Partially Occupied"
-            else:
-                status = "Occupied"
+                current_qty = flt(row.stored_qty) if not_canceled else flt(row.stored_qty) * -1
+                total_qty = flt(existing_qty + current_qty)
 
-            frappe.msgprint(f"Bin {bin_name} updated to {status}")
-            frappe.db.set_value("Bin Name", bin_name, "status", status)
+                if not pallet:
+                    frappe.db.set_value("Bin Name", bin_name, "status", "Vacant")
+                    continue
+
+                try:
+                    pallet_doc = frappe.get_doc("Pallet", pallet)
+                    capacity = flt(pallet_doc.capacity)
+                except frappe.DoesNotFoundError:
+                    frappe.throw(f"Pallet '{pallet}' not found for bin '{bin_name}'")
+
+                if total_qty <= 0:
+                    status = "Vacant"
+                elif total_qty < capacity:
+                    status = "Partially Occupied"
+                else:
+                    status = "Occupied"
+
+                frappe.msgprint(f"Bin {bin_name} updated to {status}")
+                frappe.db.set_value("Bin Name", bin_name, "status", status)
 
     @frappe.whitelist()
     def before_submit(self):

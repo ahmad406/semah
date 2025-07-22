@@ -99,7 +99,7 @@ frappe.ui.form.on("Stock Entry", {
         });
         cur_frm.set_query("bin_location", "storage_details", function (frm, cdt, cdn) {
             const selected_bins = [];
-            if(!cur_frm.doc.is_bulk_entry){
+            if(!cur_frm.doc.bulk_stock_entry){
 
                 cur_frm.doc.storage_details.forEach(row => {
                     if (row.bin_location) {
@@ -529,7 +529,7 @@ frappe.ui.form.on('Storage details', {
     // },
     bin_location: function (frm, cdt, cdn) {
         var storage = locals[cdt][cdn]
-        if (storage.bin_location && !cur_frm.doc.is_bulk_entry) {
+        if (storage.bin_location && !cur_frm.doc.bulk_stock_entry) {
 
             frappe.call({
                 method: "get_pallet",
