@@ -460,7 +460,7 @@ class CustomStockEntry(StockEntry):
                 existing_pallets = frappe.db.sql("""
                 SELECT DISTINCT pallet 
                 FROM `tabitem bin location`
-                WHERE bin_location = %s AND pallet IS NOT NULL
+                WHERE bin_location = %s AND pallet IS NOT NULL and stored_qty >0
             """, (bin_name,), as_dict=1)
 
                 for existing in existing_pallets:
