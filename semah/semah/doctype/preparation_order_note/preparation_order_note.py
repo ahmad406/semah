@@ -139,6 +139,7 @@ class PreparationOrderNote(Document):
 	def add_item_in_storage(self,insert=None):
 		self.source_bin = self.barcode
 		Type = ""
+		self.validate_bin_pallet()
 
 		if frappe.db.exists("Bin Name", self.source_bin):
 			Type = "Bin"
@@ -234,6 +235,18 @@ class PreparationOrderNote(Document):
 		else:
 			frappe.msgprint("Scan properly.")
 			return "No Show"
+		
+	def validate_bin_pallet(self):
+		pallet_list = []
+		bin_list = []
+
+		for d in self.storage_details:
+			pallet_list.append(d.pallet)
+			bin_list.append(d.bin_location_name)
+
+		if (self.barcode not in pallet_list) and (self.barcode not in bin_list):
+			frappe.throw("Scanned barcode does not match any allocated pallet or bin for this Preparation Order Note.")
+
 
 def get_required_qty(self, item):
 	for d in self.item_grid:
