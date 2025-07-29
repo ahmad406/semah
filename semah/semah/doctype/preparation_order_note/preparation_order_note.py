@@ -241,7 +241,7 @@ class PreparationOrderNote(Document):
 	def calculate_scanned(self):
 		total=0
 		for d in self.scanned_items:
-			total+=d.qty_required
+			total+=d.delivery_qty
 		self.scanned_qty=total
 		
 	def validate_bin_pallet(self):
