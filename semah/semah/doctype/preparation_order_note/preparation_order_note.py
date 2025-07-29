@@ -30,6 +30,7 @@ class PreparationOrderNote(Document):
 					s.description	=i.item_description
 		self.validate_duplicate_bin_locations()
 		self.validate_required_item()
+		self.calculate_scanned()
 
 
 
@@ -72,7 +73,7 @@ class PreparationOrderNote(Document):
 	
 	def validate_duplicate_bin_locations(self):
 		"""Validate that there are no duplicate bin_location_name values in the storage_details table."""
-		if not self.is_bulk_entry:
+		if not self.bulk_stock_entry:
 			bin_set = set()
 			for row in self.storage_details:
 				bin_name = (row.bin_location_name or "").strip().lower()
@@ -230,11 +231,18 @@ class PreparationOrderNote(Document):
 
 				self.actual_qty=data.get("stored_qty")
 
-
+			self.calculate_scanned()
 			return data
+		
 		else:
 			frappe.msgprint("Scan properly.")
 			return "No Show"
+		
+	def calculate_scanned(self):
+		total=0
+		for d in self.scanned_items:
+			total+=d.qty_required
+		self.scanned_qty=total
 		
 	def validate_bin_pallet(self):
 		pallet_list = []

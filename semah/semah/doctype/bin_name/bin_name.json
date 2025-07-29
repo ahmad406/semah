@@ -27,9 +27,11 @@
    "unique": 1
   },
   {
+   "default": "Vacant",
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
+   "no_copy": 1,
    "options": "Vacant\nPartially Occupied\nOccupied",
    "read_only": 1
   },
@@ -42,7 +44,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-06 09:11:42.129604",
+ "modified": "2025-07-29 11:06:11.830105",
  "modified_by": "Administrator",
  "module": "Semah",
  "name": "Bin Name",

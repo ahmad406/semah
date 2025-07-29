@@ -10,7 +10,7 @@
   "order_status",
   "customer",
   "sub_customer",
-  "is_bulk_entry",
+  "bulk_stock_entry",
   "delivery_request",
   "warehouse",
   "column_break_4",
@@ -41,6 +41,9 @@
   "qty",
   "insert",
   "scanned_items",
+  "section_break_36",
+  "scanned_qty",
+  "column_break_38",
   "tem",
   "amended_from"
  ],
@@ -248,23 +251,36 @@
    "options": "Preparation Storage Details barcode"
   },
   {
-   "default": "0",
-   "fetch_from": "customer.is_bulk_entry",
-   "fieldname": "is_bulk_entry",
-   "fieldtype": "Check",
-   "label": "Is Bulk Entry"
-  },
-  {
    "fieldname": "actual_qty",
    "fieldtype": "Float",
    "label": "Actual Qty",
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_36",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "scanned_qty",
+   "fieldtype": "Float",
+   "label": "Scanned Qty",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_38",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "bulk_stock_entry",
+   "fieldtype": "Check",
+   "label": "Is Bulk Entry"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-07-17 11:01:22.053601",
+ "modified": "2025-07-29 10:37:52.655110",
  "modified_by": "Administrator",
  "module": "Semah",
  "name": "Preparation Order Note",

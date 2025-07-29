@@ -64,6 +64,7 @@ frappe.ui.form.on('Preparation Order Note', {
         });
 
     },
+    
     refresh: function (frm) {
         $('[data-fieldname="tem"]').css("display", "none");
         if (!frm.is_new()) {
@@ -79,13 +80,13 @@ frappe.ui.form.on('Preparation Order Note', {
         cur_frm.fields_dict["item_grid"].grid.remove_rows_button.hide()
         cur_frm.fields_dict["item_grid"].grid.refresh();
         cur_frm.get_field("scanned_items").grid.cannot_add_rows = true
-        if (frappe.user.has_role("Labour")) {
-            cur_frm.fields_dict['scanned_items'].grid.wrapper.find('.grid-remove-all-rows').hide();
-            cur_frm.fields_dict['scanned_items'].grid.wrapper.find('.grid-remove-rows').hide();
-            frm.fields_dict['scanned_items'].grid.wrapper.find('.grid-delete-row').hide();
-            frm.fields_dict['scanned_items'].grid.wrapper.find('.edit-grid-row').hide();
+        // if (frappe.user.has_role("Labour")) {
+        //     cur_frm.fields_dict['scanned_items'].grid.wrapper.find('.grid-remove-all-rows').hide();
+        //     cur_frm.fields_dict['scanned_items'].grid.wrapper.find('.grid-remove-rows').hide();
+        //     frm.fields_dict['scanned_items'].grid.wrapper.find('.grid-delete-row').hide();
+        //     frm.fields_dict['scanned_items'].grid.wrapper.find('.edit-grid-row').hide();
 
-        }
+        // }
 
         frm.trigger("customer")
         if (cur_frm.doc.docstatus == 1) {
