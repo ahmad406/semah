@@ -195,7 +195,7 @@ frappe.ui.form.on("Stock Entry", {
             if (cur_frm.doc.stock_entry_type == 'Transfer to Quarantine') {
                 if (in_list(['Stock Entry Detail'], grid_row.doc.doctype)) {
                     if (grid_row) {
-                        grid_row.columns_list[3].df.read_only = 1
+                        grid_row.columns_list[1].df.read_only = 1
                     }
                 }
             }
