@@ -55,6 +55,14 @@ frappe.ui.form.on("Stock Entry", {
         if (frm.is_new()) {
             cur_frm.clear_table("storage_details");
             cur_frm.set_value("total_area_used", undefined)
+        }else{
+              if (in_list(["Transfer to Quarantine", "Quarantine Item Issue to Customer"], cur_frm.doc.stock_entry_type)) {
+
+            cur_frm.set_df_property("storage_details", "read_only", 1)
+        }
+        else {
+            cur_frm.set_df_property("storage_details", "read_only", 0)
+        }
         }
 
     },
@@ -99,7 +107,7 @@ frappe.ui.form.on("Stock Entry", {
         });
         cur_frm.set_query("bin_location", "storage_details", function (frm, cdt, cdn) {
             const selected_bins = [];
-            if(!cur_frm.doc.bulk_stock_entry){
+            if (!cur_frm.doc.bulk_stock_entry) {
 
                 cur_frm.doc.storage_details.forEach(row => {
                     if (row.bin_location) {
@@ -115,8 +123,8 @@ frappe.ui.form.on("Stock Entry", {
                     "selected_bins": selected_bins,
                     "item": child.item_code,
                     "expiry": child.expiry,
-                    "qty":child.stored_qty,
-                    "bin_row":cur_frm.doc.bin_row
+                    "qty": child.stored_qty,
+                    "bin_row": cur_frm.doc.bin_row
                     // ,"warehouse":child.t_ware_house
                 }
 
@@ -149,8 +157,8 @@ frappe.ui.form.on("Stock Entry", {
                 ]
             }
         });
-         cur_frm.set_query("uom", "items", function (frm, cdt, cdn) {
-           let  d=locals[cdt][cdn]
+        cur_frm.set_query("uom", "items", function (frm, cdt, cdn) {
+            let d = locals[cdt][cdn]
             return {
                 query: 'semah.custom_script.stock_entry.stock_entry.get_uom_filter',
                 filters: { "item_code": d.item_code }
@@ -160,7 +168,7 @@ frappe.ui.form.on("Stock Entry", {
 
 
 
-       
+
 
         cur_frm.cscript.onload = function (frm) {
             cur_frm.set_query("item_code", "items", function () {
@@ -192,10 +200,12 @@ frappe.ui.form.on("Stock Entry", {
                 //     }
                 // }
             }
-            if (cur_frm.doc.stock_entry_type == 'Transfer to Quarantine') {
+if (in_list(["Transfer to Quarantine", "Quarantine Item Issue to Customer"], cur_frm.doc.stock_entry_type)) {
+
                 if (in_list(['Stock Entry Detail'], grid_row.doc.doctype)) {
                     if (grid_row) {
                         grid_row.columns_list[1].df.read_only = 1
+                         grid_row.columns_list[2].df.read_only = 1
                     }
                 }
             }
@@ -295,8 +305,10 @@ frappe.ui.form.on("Stock Entry", {
 
                     }
                     else {
-                        if (cur_frm.doc.docstatus == 0) {
-                            cur_frm.set_value("to_warehouse", undefined)
+                        if (cust_warehouse && cur_frm.doc.stock_entry_type == 'Material Receipt') {
+                            if (cur_frm.doc.docstatus == 0) {
+                                cur_frm.set_value("to_warehouse", undefined)
+                            }
                         }
                     }
 
@@ -420,11 +432,12 @@ frappe.ui.form.on("Stock Entry", {
             },
         });
         cur_frm.refresh_fields("storage_details")
-        if (cur_frm.doc.stock_entry_type=="Transfer to Quarantine"){
-            cur_frm.set_df_property("storage_details","read_only",1)
+  if (in_list(["Transfer to Quarantine", "Quarantine Item Issue to Customer"], cur_frm.doc.stock_entry_type)) {
+
+            cur_frm.set_df_property("storage_details", "read_only", 1)
         }
-        else{
-            cur_frm.set_df_property("storage_details","read_only",0)
+        else {
+            cur_frm.set_df_property("storage_details", "read_only", 0)
         }
         calculateTotalStoredQuantity2();
     },
@@ -534,7 +547,7 @@ frappe.ui.form.on('Storage details', {
             frappe.call({
                 method: "get_pallet",
                 doc: cur_frm.doc,
-                args: { "bin": storage.bin_location,"item_code":storage.item_code,"expiry": storage.expiry },
+                args: { "bin": storage.bin_location, "item_code": storage.item_code, "expiry": storage.expiry },
                 callback: function (r) {
                     if (r.message) {
                         console.log(r.message)
@@ -715,7 +728,7 @@ frappe.ui.form.on("Stock Entry Detail", "form_render", function (frm, cdt, cdn) 
         cur_frm.fields_dict.items.grid.update_docfield_property("additional_cost", "hidden", 1);
         cur_frm.fields_dict.items.grid.update_docfield_property("valuation_rate", "hidden", 1);
         cur_frm.fields_dict.items.grid.update_docfield_property("accounting", "hidden", 1);
-      
+
         cur_frm.refresh_fields("storage_details")
     }
     // cur_frm.refresh_fields('items')

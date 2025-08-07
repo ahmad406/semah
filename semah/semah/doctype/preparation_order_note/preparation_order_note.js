@@ -64,7 +64,7 @@ frappe.ui.form.on('Preparation Order Note', {
         });
 
     },
-    
+
     refresh: function (frm) {
         $('[data-fieldname="tem"]').css("display", "none");
         if (!frm.is_new()) {
@@ -72,8 +72,8 @@ frappe.ui.form.on('Preparation Order Note', {
             frm.trigger("customer")
 
         }
-       // if (cur_frm.doc.docstatus != 1) {
-         //   frm.page.wrapper.find('use[href="#icon-printer"]').closest("button").hide();
+        // if (cur_frm.doc.docstatus != 1) {
+        //   frm.page.wrapper.find('use[href="#icon-printer"]').closest("button").hide();
 
         //}
         cur_frm.get_field("item_grid").grid.cannot_add_rows = true
@@ -286,91 +286,103 @@ frappe.ui.form.on('Preparation Order Note', {
 
 
     update_storage: function (frm, cdt, cdn) {
-        var d = locals[cdt][cdn];
-        var itm = frm.doc.item_grid
+        frappe.call({
+            doc: cur_frm.doc,
+            method: 'update_storage_details',
+            freeze: true,
+            callback: function (r, rt) {
+               
+        cur_frm.refresh_field("storage_details")
+        calculateDeliveryqty();
 
-        for (var i = 0; i < itm.length; i++) {
-            frappe.call({
-                method: "semah.semah.doctype.preparation_order_note.preparation_order_note.get_stock",
-                async: false,
-                args: {
-                    item: itm[i].item_code
-                },
-                callback: function (r) {
-                    console.log(r)
-                    if (i == 0) {
-                        cur_frm.clear_table("storage_details");
-                    }
-                    var list = r.message
-                    var qty_required = itm[i].qty_required
-                    var bal;
-                    if (qty_required < 0 || qty_required == 0) {
-                        frappe.throw("Delivery qty can't be " + qty_required + " of item " + itm[i].item_code)
-                        cur_frm.clear_table("storage_details");
-                    }
+            }
+        });
+        // var d = locals[cdt][cdn];
+        // var itm = frm.doc.item_grid
 
-                    for (var j = 0; j < list.length; j++) {
-                        console.log(list[j].stored_qty)
+        // for (var i = 0; i < itm.length; i++) {
+        //     frappe.call({
+        //         method: "get_stock",
+        //         doc:cur_frm.doc,
+        //         async: false,
+        //         args: {
+        //             item: itm[i].item_code
+        //         },
+        //         callback: function (r) {
+        //             console.log(r)
+        //             if (i == 0) {
+        //                 cur_frm.clear_table("storage_details");
+        //             }
+        //             var list = r.message
+        //             var qty_required = itm[i].qty_required
+        //             var bal;
+        //             if (qty_required < 0 || qty_required == 0) {
+        //                 frappe.throw("Delivery qty can't be " + qty_required + " of item " + itm[i].item_code)
+        //                 cur_frm.clear_table("storage_details");
+        //             }
 
-                        if (qty_required > 0 && list[j].stored_qty > 0) {
-                            var rw = cur_frm.add_child("storage_details");
-                            // frappe.model.set_value(rw.doctype, rw.name, "batch_no", list[j].batch_no)
-                            rw.batch_no = list[j].batch_no
-                            rw.item = itm[i].item_code
-                            rw.item_name = itm[i].item_name
-                            rw.uom = itm[i].uom
-                            rw.description = itm[i].item_description
-                            rw.required_date = itm[i].required_date
-                            rw.qty_required = itm[i].qty_required
-                            rw.warehouse = list[j].warehouse
-                            rw.expiry_date = list[j].expiry
-                            rw.bin_location_name = list[j].bin_location
-                            rw.pallet = list[j].pallet
-                            // rw.batch_no = list[j].batch_no
-                            rw.stored_qty = list[j].stored_qty
-                            rw.area_used = list[j].area_use
-                            rw.stored_in = list[j].stored_in
-                            rw.sub_customer = list[j].sub_customer
-                            if (list[j].height != 0) {
-                                rw.height = list[j].height
-                            }
-                            rw.width = list[j].width
-                            rw.length = list[j].length
-                            rw.manufacture_date = list[j].manufacturing_date
+        //             for (var j = 0; j < list.length; j++) {
+        //                 console.log(list[j].stored_qty)
 
-
-
-                            // frappe.model.set_value(rw.doctype, rw.name, "batch_no",list[j].batch_no)
-
-                            // rw.batch_no = list[j].batch_no
-                            if (qty_required > list[j].stored_qty) {
-                                rw.delivery_qty = list[j].stored_qty
-                            } else {
-                                rw.delivery_qty = qty_required
-
-                            }
-                            bal = qty_required - list[j].stored_qty
-                            qty_required = qty_required - list[j].stored_qty
-                        }
-                    }
-                    console.log(bal)
-                    if (qty_required > 0) {
-                        console.log(bal)
-                        frappe.throw("insufficient stock of " + itm[i].item_code)
-
-                    }
-
-                    cur_frm.refresh_field("storage_details")
-                    calculateDeliveryqty();
+        //                 if (qty_required > 0 && list[j].stored_qty > 0) {
+        //                     var rw = cur_frm.add_child("storage_details");
+        //                     // frappe.model.set_value(rw.doctype, rw.name, "batch_no", list[j].batch_no)
+        //                     rw.batch_no = list[j].batch_no
+        //                     rw.item = itm[i].item_code
+        //                     rw.item_name = itm[i].item_name
+        //                     rw.uom = itm[i].uom
+        //                     rw.description = itm[i].item_description
+        //                     rw.required_date = itm[i].required_date
+        //                     rw.qty_required = itm[i].qty_required
+        //                     rw.warehouse = list[j].warehouse
+        //                     rw.expiry_date = list[j].expiry
+        //                     rw.bin_location_name = list[j].bin_location
+        //                     rw.pallet = list[j].pallet
+        //                     // rw.batch_no = list[j].batch_no
+        //                     rw.stored_qty = list[j].stored_qty
+        //                     rw.area_used = list[j].area_use
+        //                     rw.stored_in = list[j].stored_in
+        //                     rw.sub_customer = list[j].sub_customer
+        //                     if (list[j].height != 0) {
+        //                         rw.height = list[j].height
+        //                     }
+        //                     rw.width = list[j].width
+        //                     rw.length = list[j].length
+        //                     rw.manufacture_date = list[j].manufacturing_date
 
 
 
+        //                     // frappe.model.set_value(rw.doctype, rw.name, "batch_no",list[j].batch_no)
 
-                }
+        //                     // rw.batch_no = list[j].batch_no
+        //                     if (qty_required > list[j].stored_qty) {
+        //                         rw.delivery_qty = list[j].stored_qty
+        //                     } else {
+        //                         rw.delivery_qty = qty_required
 
-            });
+        //                     }
+        //                     bal = qty_required - list[j].stored_qty
+        //                     qty_required = qty_required - list[j].stored_qty
+        //                 }
+        //             }
+        //             console.log(bal)
+        //             if (qty_required > 0) {
+        //                 console.log(bal)
+        //                 frappe.throw("insufficient stock of " + itm[i].item_code)
 
-        }
+        //             }
+
+        cur_frm.refresh_field("storage_details")
+        calculateDeliveryqty();
+
+
+
+
+        //     }
+
+        // });
+
+        // }
 
 
     },
@@ -572,7 +584,7 @@ frappe.ui.form.on('Preparation Storage Details', {
             frappe.call({
                 method: "fetch_item_details",
                 doc: cur_frm.doc,
-                args:{"row":child,"value_type":"Batch"},
+                args: { "row": child, "value_type": "Batch" },
                 callback: function (r) {
                     if (r.message) {
                         cur_frm.refresh()
@@ -601,7 +613,7 @@ frappe.ui.form.on('Preparation Storage Details', {
             frappe.call({
                 method: "fetch_item_details",
                 doc: cur_frm.doc,
-                args:{"row":child,"value_type":"BIN"},
+                args: { "row": child, "value_type": "BIN" },
                 callback: function (r) {
                     if (r.message) {
                         cur_frm.refresh()

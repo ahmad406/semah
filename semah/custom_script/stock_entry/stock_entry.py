@@ -86,41 +86,43 @@ class CustomStockEntry(StockEntry):
  
 
     def validate_pallet_capacity(self):
-        for row in self.storage_details:
-            if not row.bin_location or not row.pallet:
-                continue
+        if self.stock_entry_type == 'Material Receipt':
+            for row in self.storage_details:
+                if not row.bin_location or not row.pallet:
+                    continue
 
-            pallet = frappe.get_doc("Pallet", row.pallet)
-            bin_location = row.bin_location
+                pallet = frappe.get_doc("Pallet", row.pallet)
+                bin_location = row.bin_location
 
-            existing = frappe.db.sql("""
-                SELECT SUM(stored_qty) AS total
-                FROM `tabitem bin location`
-                WHERE bin_location = %s
-                AND pallet = %s
-                AND docstatus < 2
-                AND name != %s
-            """, (bin_location, row.pallet, self.name), as_dict=1)[0]
+                existing = frappe.db.sql("""
+                    SELECT SUM(stored_qty) AS total
+                    FROM `tabitem bin location`
+                    WHERE bin_location = %s
+                    AND pallet = %s
+                    AND docstatus < 2
+                    AND name != %s
+                """, (bin_location, row.pallet, self.name), as_dict=1)[0]
 
-            existing_qty = flt(existing.total or 0)
-            new_qty = flt(row.stored_qty or 0)
+                existing_qty = flt(existing.total or 0)
+                new_qty = flt(row.stored_qty or 0)
 
-            total = existing_qty + new_qty
+                total = existing_qty + new_qty
 
-            if total > flt(pallet.capacity):
-                frappe.throw(
-                    f"Pallet '{row.pallet}' capacity exceeded in Bin '{bin_location}'. "
-                    f"Current: {existing_qty}, Adding: {new_qty}, Capacity: {pallet.capacity}"
+                if total > flt(pallet.capacity):
+                    frappe.throw(
+                        f"Pallet '{row.pallet}' capacity exceeded in Bin '{bin_location}'. "
+                        f"Current: {existing_qty}, Adding: {new_qty}, Capacity: {pallet.capacity}"
                 )
 
     def validate_unique_bins(self):
-        if not self.bulk_stock_entry:
-            seen_bins = set()
-            for row in self.storage_details:
-                if row.bin_location:
-                    if row.bin_location in seen_bins:
-                        frappe.throw(f"Bin '{row.bin_location}' is repeated in storage details. Each bin must be unique.")
-                    seen_bins.add(row.bin_location)
+        if self.stock_entry_type == 'Material Receipt':
+            if not self.bulk_stock_entry:
+                seen_bins = set()
+                for row in self.storage_details:
+                    if row.bin_location:
+                        if row.bin_location in seen_bins:
+                            frappe.throw(f"Bin '{row.bin_location}' is repeated in storage details. Each bin must be unique.")
+                        seen_bins.add(row.bin_location)
 
     @frappe.whitelist()
     def get_warehouse_of_customer(self):
@@ -271,7 +273,7 @@ class CustomStockEntry(StockEntry):
             """
             for bin_entry in target_doc.bin:
                 if (
-                    bin_entry.batch_no == bin_details.batch
+                    bin_entry.batch_no == bin_details.batch_no
                     and bin_entry.bin_location == bin_details.bin_location
                     and bin_entry.warehouse == bin_details.t_ware_house
                     and bin_entry.pallet == bin_details.pallet
@@ -449,7 +451,56 @@ class CustomStockEntry(StockEntry):
 
 
     def update_bin_status(self, not_canceled=True):
-        if not self.bulk_stock_entry:
+        if self.stock_entry_type=='Material Receipt':
+            if not self.bulk_stock_entry:
+                for row in self.get("storage_details"):
+                    bin_name = row.bin_location
+                    item_code = row.item_code
+                    pallet = row.pallet
+
+                    if not bin_name:
+                        frappe.throw(f"Bin location missing in row {row.idx or '[unknown]'}")
+                    existing_pallets = frappe.db.sql("""
+                    SELECT DISTINCT pallet 
+                    FROM `tabitem bin location`
+                    WHERE bin_location = %s AND pallet IS NOT NULL and stored_qty >0
+                """, (bin_name,), as_dict=1)
+
+                    for existing in existing_pallets:
+                        if existing.pallet and existing.pallet != pallet:
+                            frappe.throw(f"Bin '{bin_name}' already contains a different pallet: '{existing.pallet}'. Only one pallet is allowed per bin.")
+
+
+                    # Always use the correct parameters based on presence of pallet and item
+                    existing_qty = frappe.db.sql("""
+                        SELECT SUM(stored_qty)
+                        FROM `tabitem bin location`
+                        WHERE bin_location = %s AND parent = %s AND pallet = %s
+                    """, (bin_name, item_code, pallet))[0][0] or 0
+
+                    current_qty = flt(row.stored_qty) if not_canceled else flt(row.stored_qty) * -1
+                    total_qty = flt(existing_qty + current_qty)
+
+                    if not pallet:
+                        frappe.db.set_value("Bin Name", bin_name, "status", "Vacant")
+                        continue
+
+                    try:
+                        pallet_doc = frappe.get_doc("Pallet", pallet)
+                        capacity = flt(pallet_doc.capacity)
+                    except frappe.DoesNotFoundError:
+                        frappe.throw(f"Pallet '{pallet}' not found for bin '{bin_name}'")
+
+                    if total_qty <= 0:
+                        status = "Vacant"
+                    elif total_qty < capacity:
+                        status = "Partially Occupied"
+                    else:
+                        status = "Occupied"
+
+                    frappe.msgprint(f"Bin {bin_name} updated to {status}")
+                    frappe.db.set_value("Bin Name", bin_name, "status", status)
+        if self.stock_entry_type=='Transfer to Quarantine':
             for row in self.get("storage_details"):
                 bin_name = row.bin_location
                 item_code = row.item_code
@@ -457,46 +508,8 @@ class CustomStockEntry(StockEntry):
 
                 if not bin_name:
                     frappe.throw(f"Bin location missing in row {row.idx or '[unknown]'}")
-                existing_pallets = frappe.db.sql("""
-                SELECT DISTINCT pallet 
-                FROM `tabitem bin location`
-                WHERE bin_location = %s AND pallet IS NOT NULL and stored_qty >0
-            """, (bin_name,), as_dict=1)
+                frappe.db.set_value("Bin Name", bin_name, "status", "Vacant")
 
-                for existing in existing_pallets:
-                    if existing.pallet and existing.pallet != pallet:
-                        frappe.throw(f"Bin '{bin_name}' already contains a different pallet: '{existing.pallet}'. Only one pallet is allowed per bin.")
-
-
-                # Always use the correct parameters based on presence of pallet and item
-                existing_qty = frappe.db.sql("""
-                    SELECT SUM(stored_qty)
-                    FROM `tabitem bin location`
-                    WHERE bin_location = %s AND parent = %s AND pallet = %s
-                """, (bin_name, item_code, pallet))[0][0] or 0
-
-                current_qty = flt(row.stored_qty) if not_canceled else flt(row.stored_qty) * -1
-                total_qty = flt(existing_qty + current_qty)
-
-                if not pallet:
-                    frappe.db.set_value("Bin Name", bin_name, "status", "Vacant")
-                    continue
-
-                try:
-                    pallet_doc = frappe.get_doc("Pallet", pallet)
-                    capacity = flt(pallet_doc.capacity)
-                except frappe.DoesNotFoundError:
-                    frappe.throw(f"Pallet '{pallet}' not found for bin '{bin_name}'")
-
-                if total_qty <= 0:
-                    status = "Vacant"
-                elif total_qty < capacity:
-                    status = "Partially Occupied"
-                else:
-                    status = "Occupied"
-
-                frappe.msgprint(f"Bin {bin_name} updated to {status}")
-                frappe.db.set_value("Bin Name", bin_name, "status", status)
 
     @frappe.whitelist()
     def before_submit(self):
@@ -528,13 +541,18 @@ class CustomStockEntry(StockEntry):
 
                 # Transfer to Quarantine: Update Location
                 elif action == 'transfer':
-                    if bin_entry.batch_no == bin_details.batch:
+                    
+                     if (
+                        bin_entry.batch_no == bin_details.batch_no and
+                        bin_entry.bin_location == bin_details.bin_location and
+                        bin_entry.pallet == bin_details.pallet
+                    ):
                         bin_entry.t_bin = bin_entry.bin_location
                         bin_entry.t_warehouse = bin_entry.warehouse
                         bin_entry.bin_location = bin_details.bin_location
                         bin_entry.warehouse = bin_details.t_ware_house
                         bin_entry.reciept = self.name
-                        bin_entry.pallet = self.pallet
+                        bin_entry.pallet = bin_details.pallet
                         return True
 
                 # Quarantine Item Issue to Customer: Reduce Quantity
@@ -579,68 +597,113 @@ class CustomStockEntry(StockEntry):
             target_doc = frappe.get_doc("Item", item.item_code)
 
             if self.stock_entry_type == 'Material Receipt':
-                # Add stored_qty
                 if not update_or_create_bin(target_doc, item, action='add'):
                     frappe.throw(f"Failed to add bin details for item {item.item_code}")
 
             elif self.stock_entry_type == 'Transfer to Quarantine':
-                # Transfer bin location
                 if not update_or_create_bin(target_doc, item, action='transfer'):
-                    frappe.throw(f"Item not found: {item.item_code} with batch {item.batch}")
+                    frappe.throw(f"Item not found: {item.item_code} with batch {item.batch_no}")
 
             elif self.stock_entry_type == 'Quarantine Item Issue to Customer':
-                # Reduce stored_qty
                 if not update_or_create_bin(target_doc, item, action='reduce'):
                     frappe.throw(f"Item not found: {item.item_code} with batch {item.batch}")
+            
 
-            # Save changes to the target document
             target_doc.save()
 
     @frappe.whitelist()
     def updatestorage(self, bin):
         self.storage_details = []
-        if self.stock_entry_type=="Material Receipt":
-            self.update_material_reciept_storage(bin)
-        if self.stock_entry_type=="Transfer to Quarantine":
+        if self.stock_entry_type in ["Transfer to Quarantine","Quarantine Item Issue to Customer"]:
             self.update_quarantine_storage()
+        else:
+            self.update_material_reciept_storage(bin)
 
     def update_quarantine_storage(self):
-        for itm in self.items:
-            data = self.get_item_stock_details(itm)
+        for j in self.items:
+            data = self.get_item_stock_details(j)
             if not data:
-                continue  
+                frappe.throw(
+                    f"No available stock found for Item: {j.item_code}, Batch: {j.batch_no}, "
+                    f"Source Warehouse: {j.s_warehouse or 'N/A'}"
+                )
 
-            row = self.append("storage_details", {})
-            row.item_code = itm.item_code
-            row.item_name = itm.item_name
-            row.sub_customer = self.sub_customer
-            row.length = data.get("length")
-            row.width = data.get("width")
-            row.height = data.get("height")
-            row.uom = itm.uom
-            row.customer_batch_id = itm.customer_batch_id
-            row.note = itm.note
+            if self.stock_entry_type == 'Transfer to Quarantine':
+                for itm in data:
+                    row = self.append("storage_details", {})
+                    row.item_code = itm.get("item_code")
+                    row.item_name = j.item_name
+                    row.sub_customer = self.sub_customer
+                    row.length = itm.get("length")
+                    row.width = itm.get("width")
+                    row.height = itm.get("height")
+                    row.uom = j.uom
+                    row.customer_batch_id = j.customer_batch_id
+                    row.note = j.note
 
-            row.batch_no = itm.batch_no
-            row.expiry = data.get("expiry")
-            row.manufacture = data.get("manufacturing_date")
-            row.stored_qty = data.get("stored_qty")
+                    row.batch_no = j.batch_no
+                    row.batch = j.batch_no
+                    row.expiry = itm.get("expiry")
+                    row.manufacture = itm.get("manufacturing_date")
+                    row.stored_qty = itm.get("stored_qty")
 
-            row.t_ware_house = data.get("warehouse")
-            row.pallet = data.get("pallet")
-            row.area_used = data.get("area_use")
-            row.bin_location = data.get("bin_location")
+                    row.t_ware_house = j.s_warehouse if self.stock_entry_type == "Quarantine Item Issue to Customer" else j.t_warehouse
+                    row.pallet = itm.get("pallet")
+                    row.area_used = itm.get("area_use")
+                    row.bin_location = itm.get("bin_location")
+            else:
+                
+                        
+
+                remaining_qty = j.qty
+
+                for stock in data:
+                    available_qty = stock.get("stored_qty") or 0
+                    if available_qty <= 0 or remaining_qty <= 0:
+                        continue  
+
+                    used_qty = min(available_qty, remaining_qty)
+
+                    row = self.append("storage_details", {})
+                    row.item_code = j.item_code
+                    row.item_name = j.item_name
+                    row.batch_no = j.batch_no
+                    row.batch = j.batch_no
+                    row.sub_customer = self.sub_customer
+                    row.bin_location = stock.get("bin_location")
+                    row.t_ware_house = stock.get("warehouse")
+                    row.pallet = stock.get("pallet")
+                    row.expiry = stock.get("expiry")
+                    row.manufacturing_date = stock.get("manufacturing_date")
+                    row.uom = j.uom
+                    row.area_used = stock.get("area_use")
+                    row.length = stock.get("length")
+                    row.width = stock.get("width")
+                    row.height = stock.get("height")
+                    
+                    row.stored_qty = used_qty
+
+                    remaining_qty -= used_qty
+
+                    if remaining_qty <= 0:
+                        break
+
 
     def get_item_stock_details(self, itm):
+        
+            
+
         sql = """
             SELECT parent item_code, length, width, height, manufacturing_date,
                 sub_customer, stored_qty, expiry, batch_no, bin_location,
                 warehouse, pallet, area_use
             FROM `tabitem bin location`
-            WHERE parent = %s AND batch_no = %s AND stored_qty > 0
+            WHERE parent = %s AND batch_no = %s AND warehouse = %s  AND stored_qty > 0 ORDER BY expiry ASC, bin_location ASC
+
+
         """
-        data = frappe.db.sql(sql, (itm.item_code, itm.batch_no), as_dict=True)
-        return data[0] if data else None
+        return frappe.db.sql(sql, (itm.item_code, itm.batch_no, itm.s_warehouse ), as_dict=True)
+
 
 
 

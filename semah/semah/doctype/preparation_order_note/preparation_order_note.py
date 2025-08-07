@@ -12,6 +12,75 @@ from collections import defaultdict
 from frappe.utils import flt
 
 class PreparationOrderNote(Document):
+	@frappe.whitelist()
+	def update_storage_details(self):
+		frappe.msgprint("test")
+		all_rows = []
+
+		for itm in self.item_grid:
+			item_code = itm.item_code
+			qty_required = itm.qty_required
+
+			if not item_code or qty_required is None:
+				continue
+
+			if qty_required <= 0:
+				frappe.throw(f"Delivery qty can't be {qty_required} for item {item_code}")
+
+			has_batch_no = frappe.db.get_value("Item", item_code, "has_batch_no")
+
+			if has_batch_no:
+				stock_rows = frappe.db.sql("""
+					SELECT * FROM `tabitem bin location`
+					WHERE parent = %s AND stored_qty > 0 AND expiry >= NOW()
+					ORDER BY expiry ASC, stored_qty ASC
+				""", (item_code,), as_dict=True)
+			else:
+				stock_rows = frappe.db.sql("""
+					SELECT * FROM `tabitem bin location`
+					WHERE parent = %s AND stored_qty > 0
+					ORDER BY stored_qty ASC
+				""", (item_code,), as_dict=True)
+
+			for stock in stock_rows:
+				if qty_required <= 0:
+					break
+
+				delivery_qty = min(qty_required, stock.stored_qty)
+				qty_required -= delivery_qty
+
+				all_rows.append({
+					"batch_no": stock.get("batch_no"),
+					"item": item_code,
+					"item_name": itm.item_name,
+					"uom": itm.uom,
+					"description": itm.item_description,
+					"required_date": itm.required_date,
+					"qty_required": itm.qty_required,
+					"warehouse": stock.warehouse,
+					"expiry_date": stock.expiry,
+					"bin_location_name": stock.bin_location,
+					"pallet": stock.pallet,
+					"stored_qty": stock.stored_qty,
+					"area_used": stock.area_use,
+					"stored_in": stock.stored_in,
+					"sub_customer": stock.sub_customer,
+					"height": stock.height if stock.height != 0 else None,
+					"width": stock.width,
+					"length": stock.length,
+					"manufacture_date": stock.manufacturing_date,
+					"delivery_qty": delivery_qty
+				})
+
+			if qty_required > 0:
+				frappe.throw(f"Insufficient stock for item {item_code}")
+
+		all_rows.sort(key=lambda x: x.get("bin_location_name") or "")
+
+		self.storage_details = []
+		for row in all_rows:
+			self.append("storage_details", row)
+
 	def on_submit(self):
 		frappe.db.sql("""update  `tabDelivery Request` set doc_status="To Make Delivery Note"
 		where name="{0}" """.format(self.delivery_request))
@@ -295,14 +364,14 @@ def get_delivery_request(customer):
 def update_row(item,batch,warehouse,bin_location_name):
 	data=frappe.db.sql(""" select stored_qty,stored_in,length,height,width,area_use,sub_customer from `tabitem bin location` where parent="{0}"  and batch_no="{1}" and warehouse="{2}" and bin_location='{3}' """.format(item,batch,warehouse,bin_location_name),as_dict=True)
 	return data
-@frappe.whitelist()
-def get_stock(item):
-	is_batch=is_batch_item(item)
-	if is_batch:
-		stk= frappe.db.sql("""select * from `tabitem bin location` where parent="{0}"  and stored_qty!=0 and expiry>=now() order by expiry asc,stored_qty ASC""".format(item),as_dict=1)
-	else:
-		stk= frappe.db.sql("""select * from `tabitem bin location` where parent="{0}"  and stored_qty!=0 order by stored_qty ASC """.format(item),as_dict=1)
-	return stk
+# @frappe.whitelist()
+# def get_stock(self,item):
+# 	is_batch=is_batch_item(item)
+# 	if is_batch:
+# 		stk= frappe.db.sql("""select * from `tabitem bin location` where parent="{0}"  and stored_qty!=0 and expiry>=now() order by expiry asc,stored_qty ASC""".format(item),as_dict=1)
+# 	else:
+# 		stk= frappe.db.sql("""select * from `tabitem bin location` where parent="{0}"  and stored_qty!=0 order by stored_qty ASC """.format(item),as_dict=1)
+# 	return stk
 
 def is_batch_item(item_code):
 	has_batch_no = frappe.get_value('Item', item_code, 'has_batch_no')
