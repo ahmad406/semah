@@ -14,7 +14,6 @@ from frappe.utils import flt
 class PreparationOrderNote(Document):
 	@frappe.whitelist()
 	def update_storage_details(self):
-		frappe.msgprint("test")
 		all_rows = []
 
 		for itm in self.item_grid:
