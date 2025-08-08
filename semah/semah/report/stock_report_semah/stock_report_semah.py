@@ -1,5 +1,4 @@
-# Copyright (c) 2013, Dconnex and contributors
-# For license information, please see license.txt
+
 
 import frappe
 import json
@@ -12,15 +11,6 @@ def execute(filters=None):
 		return [], []	
 	conditions= get_conditions(filters)
 	frappe.errprint(conditions)
-	# if filters.get("item_code") and not filters.get("warehouse") and not filters.get("customer") and not  filters.get("sub_customer"):
-	# 	conditions=" and p.item_code='{0} ".format(filters.get("item_code"))
-	# elif filters.get("warehouse") and not filters.get("item_code") and not filters.get("customer") and not  filters.get("sub_customer"):
-	# 	conditions.append(' and c.Ware_house="{0}" '.format(filters.get("warehouse")))
-	# elif filters.get("customer") and not filters.get("item_code") and not filters.get("warehouse") and not  filters.get("sub_customer"):
-	# 	conditions.append(' and p.customer_="{0}"" '.format(filters.get("customer")))
-	# elif filters.get("sub_customer") and not filters.get("item_code") and not filters.get("warehouse") and not  filters.get("sub_customer"):
-	# 	conditions.append(' and c.sub_customer like "%{0}%" '.format(filters.get("customer")))
-
 	sql = """				
 	 select  p.customer_ as customer,p.stock_uom,p.item_name,p.sku,p.disabled,p.name as item_code,
 	 b.customer_batch_id,c.batch_no as batch,c.sub_customer,c.warehouse,p.has_batch_no,c.bin_location,
@@ -69,9 +59,17 @@ def get_conditions(filters):
 	conditions=""
 	if filters.get("item_code"):
 		conditions=conditions+' and p.item_code="{0}" '.format(filters.get("item_code"))
-	if filters.get("ware_house"):
-		frappe.errprint(filters.get("warehouse"))
-		conditions=conditions+' and warehouse="{0}" '.format(filters.get("ware_house"))
+	if filters.get("ware_house"):  
+		wh = filters.get("ware_house")
+		lft, rgt = frappe.db.get_value("Warehouse", wh, ["lft", "rgt"])
+		if lft is not None and rgt is not None:
+			conditions += """
+				and c.warehouse in (
+					select name from `tabWarehouse`
+					where lft >= {0} and rgt <= {1}
+				)
+			""".format(lft, rgt)
+
 	if filters.get("customer"):
 		conditions=conditions+' and p.customer_="{0}" '.format(filters.get("customer"))
 	if filters.get("sub_customer"):
