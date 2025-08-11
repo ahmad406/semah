@@ -99,8 +99,16 @@ class PreparationOrderNote(Document):
 		self.validate_duplicate_bin_locations()
 		self.validate_required_item()
 		self.calculate_scanned()
+		self.calculate_total_qty()
 
+	def calculate_total_qty(self):
+		total_stored_qty = 0
 
+		for d in self.storage_details:
+			total_stored_qty += flt(d.delivery_qty or 0)
+
+		self.total_delivery_quantity = total_stored_qty
+		
 
 
 	def validate_scanned(self):
