@@ -30,9 +30,12 @@ frappe.ui.form.on('Preparation Order Note', {
 
     },
     onload: function (frm) {
-        calculateItemGridQuanitty();
-        calculateDeliveryqty();
-        cur_frm.set_value("naming_series", "MAT-PON-.YYYY.-")
+        if (cur_frm.doc.docstatus==0){
+
+            calculateItemGridQuanitty();
+            calculateDeliveryqty();
+            cur_frm.set_value("naming_series", "MAT-PON-.YYYY.-")
+        }
     },
     before_submit: function (frm) {
         cur_frm.doc.order_status = "To make Delivery Note"
