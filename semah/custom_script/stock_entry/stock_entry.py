@@ -239,6 +239,7 @@ class CustomStockEntry(StockEntry):
             self.set_material_request_transfer_status('Not Started')
         if self.purpose == 'Material Transfer' and self.outgoing_stock_entry:
             self.set_material_request_transfer_status('In Transit')
+        self.delete_pallet()
 
 
     def custom_delete_auto_created_batches(self):
@@ -266,7 +267,6 @@ class CustomStockEntry(StockEntry):
     @frappe.whitelist()
     def before_cancel(self):
         self.update_bin_status(not_canceled=False)
-        self.delete_pallet()
         def revert_bin_location(target_doc, bin_details):
             """
             Reverts bin location and warehouse back to original values stored in t_bin and t_warehouse.
@@ -399,6 +399,7 @@ class CustomStockEntry(StockEntry):
 
                     try:
                         pl = frappe.get_doc("Pallet", itm.pallet)
+                        itm.db_set("pallet",None)
                         pl.delete()
                     except frappe.DoesNotExistError:
                         frappe.msgprint(f"Pallet {itm.pallet} not found, skipping.")

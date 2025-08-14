@@ -120,15 +120,14 @@
   },
   {
    "fieldname": "pallet",
-   "fieldtype": "Link",
-   "label": "Pallet",
-   "options": "Pallet"
+   "fieldtype": "Data",
+   "label": "Pallet"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-05-07 17:29:10.223919",
+ "modified": "2025-08-14 15:28:04.211764",
  "modified_by": "Administrator",
  "module": "Semah",
  "name": "item bin location",
