@@ -385,8 +385,19 @@ class CustomStockEntry(StockEntry):
         if self.stock_entry_type == 'Material Receipt':
             for itm in self.get('storage_details'):
                 if itm.pallet:
+                    in_use = frappe.db.exists(
+                        "Storage Details",
+                        {
+                            "pallet": itm.pallet,
+                            "parent": ["!=", self.name]  
+                        }
+                    )
+                    
+                    if in_use:
+                        frappe.msgprint(f"Pallet {itm.pallet} is used in another record, skipping deletion.")
+                        continue
+
                     try:
-                        # Ensure pallet exists before deletion
                         pl = frappe.get_doc("Pallet", itm.pallet)
                         pl.delete()
                     except frappe.DoesNotExistError:
