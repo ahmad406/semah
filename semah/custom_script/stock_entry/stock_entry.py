@@ -16,9 +16,12 @@ class CustomStockEntry(StockEntry):
 
     def validate(self):
         self.pro_doc = frappe._dict()
+        
         if self.work_order:
             self.pro_doc = frappe.get_doc('Work Order', self.work_order)
+        self.update_batch()
         self.validate_unique_bins()
+        
 
         self.validate_posting_time()
         self.validate_purpose()
@@ -113,6 +116,14 @@ class CustomStockEntry(StockEntry):
                         f"Pallet '{row.pallet}' capacity exceeded in Bin '{bin_location}'. "
                         f"Current: {existing_qty}, Adding: {new_qty}, Capacity: {pallet.capacity}"
                 )
+    def update_batch(self):
+        for d in self.storage_details:
+            if d.batch and not d.batch_no:
+                d.batch_no = d.batch
+            if d.batch_no and not d.batch:
+                d.batch = d.batch_no
+
+            
 
     def validate_unique_bins(self):
         if self.stock_entry_type == 'Material Receipt':
