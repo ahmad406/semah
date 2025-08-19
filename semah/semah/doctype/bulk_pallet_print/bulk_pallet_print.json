@@ -37,7 +37,8 @@
   {
    "fieldname": "storage_details",
    "fieldtype": "Table",
-   "options": "bulk pallet"
+   "options": "bulk pallet",
+   "read_only": 1
   },
   {
    "fieldname": "sub_customer",
@@ -52,7 +53,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-19 19:29:03.821591",
+ "modified": "2025-08-19 19:34:50.516355",
  "modified_by": "Administrator",
  "module": "Semah",
  "name": "Bulk Pallet Print",
