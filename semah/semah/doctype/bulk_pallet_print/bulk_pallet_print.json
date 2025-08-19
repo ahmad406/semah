@@ -1,0 +1,77 @@
+{
+ "actions": [],
+ "creation": "2025-08-19 18:45:42.526633",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "customer",
+  "sub_customer",
+  "section_break_3",
+  "get_pallet",
+  "storage_details"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "remember_last_selected_value": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_3",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Customer",
+   "options": "Customer",
+   "reqd": 1
+  },
+  {
+   "fieldname": "storage_details",
+   "fieldtype": "Table",
+   "options": "bulk pallet"
+  },
+  {
+   "fieldname": "sub_customer",
+   "fieldtype": "Select",
+   "label": "Sub Customer"
+  },
+  {
+   "fieldname": "get_pallet",
+   "fieldtype": "Button",
+   "label": "Get Pallet"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-08-19 19:29:03.821591",
+ "modified_by": "Administrator",
+ "module": "Semah",
+ "name": "Bulk Pallet Print",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1,
+ "track_seen": 1,
+ "track_views": 1
+}

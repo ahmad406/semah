@@ -1,0 +1,47 @@
+{
+ "actions": [],
+ "creation": "2025-08-19 18:51:30.795262",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_name",
+  "bin_location",
+  "pallet"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "bin_location",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Bin location",
+   "read_only": 1
+  },
+  {
+   "fieldname": "pallet",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Pallet",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-08-19 18:53:09.745837",
+ "modified_by": "Administrator",
+ "module": "Semah",
+ "name": "bulk pallet",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
