@@ -34,9 +34,17 @@ class BulkPalletPrint(Document):
 			frappe.throw("Company is mandatory")
 		if not self.customer:
 			frappe.throw("Customer is mandatory")
+		if not self.from_date:
+			frappe.throw("From Date is mandatory")
+		if not self.to_date:
+			frappe.throw("To Date is mandatory")
 
 		cond += " AND p.company = {0}".format(frappe.db.escape(self.company))
 		cond += " AND p.customer_nm = {0}".format(frappe.db.escape(self.customer))
+		cond += " AND p.posting_date BETWEEN {0} AND {1}".format(
+    frappe.db.escape(self.from_date), frappe.db.escape(self.to_date)
+)
+
 
 
 		if self.sub_customer:
