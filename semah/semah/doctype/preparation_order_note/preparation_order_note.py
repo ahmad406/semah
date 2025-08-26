@@ -103,11 +103,15 @@ class PreparationOrderNote(Document):
 
 	def calculate_total_qty(self):
 		total_stored_qty = 0
+		warehouse=None
 
 		for d in self.storage_details:
 			total_stored_qty += flt(d.delivery_qty or 0)
+			if not warehouse:
+				warehouse=d.warehouse
 
 		self.total_delivery_quantity = total_stored_qty
+		self.warehouse=warehouse
 		
 
 
