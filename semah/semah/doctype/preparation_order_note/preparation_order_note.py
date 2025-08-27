@@ -79,6 +79,9 @@ class PreparationOrderNote(Document):
 		self.storage_details = []
 		for row in all_rows:
 			self.append("storage_details", row)
+		self.calculate_total_qty()
+		
+		
 
 	def on_submit(self):
 		frappe.db.sql("""update  `tabDelivery Request` set doc_status="To Make Delivery Note"
@@ -211,7 +214,7 @@ class PreparationOrderNote(Document):
 					req_item=get_required_qty(self,item.item_code)
 					d.qty_required = req_item.get("qty_required") if req_item else 0
 
-
+					self.calculate_total_qty()
 					return True
 
 

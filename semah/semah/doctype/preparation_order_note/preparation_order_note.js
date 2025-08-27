@@ -295,8 +295,8 @@ frappe.ui.form.on('Preparation Order Note', {
             freeze: true,
             callback: function (r, rt) {
                
-        cur_frm.refresh_field("storage_details")
-        calculateDeliveryqty();
+        cur_frm.refresh_fields()
+        // calculateDeliveryqty();
 
             }
         });
