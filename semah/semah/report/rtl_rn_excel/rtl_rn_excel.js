@@ -20,7 +20,7 @@ frappe.query_reports["RTL RN Excel"] = {
     },
     {
       "fieldname": "customer_nm",
-      "label": "Customer",
+      "label": "Item belong to",
       "fieldtype": "Link",
       "options": "Customer"
     },
