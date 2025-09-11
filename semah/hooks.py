@@ -2,7 +2,7 @@ from . import __version__ as app_version
 
 app_name = "semah"
 app_title = "Semah"
-app_publisher = "Dconnex"
+app_publisher = "FlexiErp"
 app_description = "App for semah v13 erpnext"
 app_icon = "octicon octicon-file-directory"
 app_color = "grey"
@@ -114,8 +114,11 @@ doc_events = {
 		"on_update" : "semah.custom_script.item.item.on_update",
         "before_validate" : "semah.custom_script.item.item.validate",
 	},
-     "Batch": {
-		"validate" : "semah.custom_script.batch.batch.validate",
+     #"Batch": {
+#		"validate" : "semah.custom_script.batch.batch.validate",
+#	},
+     "Sales Invoice": {
+		"validate" : "semah.custom_script.sales_invoice.sales_invoice.validate",
 	},
 	
 	

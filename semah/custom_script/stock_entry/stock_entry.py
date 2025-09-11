@@ -73,9 +73,9 @@ class CustomStockEntry(StockEntry):
                 SELECT p.capacity, c.stored_qty
                 FROM `tabPallet` p
                 INNER JOIN `tabitem bin location` c ON p.name = c.pallet
-                WHERE c.parent = %s AND c.expiry = %s AND c.bin_location = %s
+                WHERE c.parent = %s AND c.expiry = %s AND c.bin_location = %s and c.batch_no=%s
                 LIMIT 1
-            """, (self.item, self.expiry, bin_location), as_dict=True)
+            """, (self.item, self.expiry, bin_location,row.batch_no ), as_dict=True)
 
             if not result:
                 frappe.throw(f"Bin {bin_location} is not linked to Item {self.item} with expiry {self.expiry}.")
@@ -320,6 +320,7 @@ class CustomStockEntry(StockEntry):
                         bin.stored_qty += bin_details.stored_qty
 
                     # Recalculate area use based on new stored_qty
+                    
                     bin.area_use = bin_details.length * bin_details.width * (bin_details.height or 1) * bin.stored_qty
 
                     # Prevent negative stored_qty
@@ -432,7 +433,7 @@ class CustomStockEntry(StockEntry):
         return(combined)
      
     @frappe.whitelist()
-    def get_pallet(self, bin,item_code,expiry=None):
+    def get_pallet(self, bin,item_code,expiry=None,batch=None):
 
         item = frappe.get_doc("Item", item_code)
         has_expiry = item.has_expiry_date
@@ -443,8 +444,8 @@ class CustomStockEntry(StockEntry):
         if expiry:
             dt = frappe.db.sql("""
                 SELECT * FROM  `tabitem bin location`
-                WHERE bin_location = %s AND expiry = %s AND stored_qty > 0
-            """, (bin, expiry), as_dict=1)
+                WHERE bin_location = %s AND expiry = %s and batch_no=%s AND stored_qty > 0
+            """, (bin, expiry,batch), as_dict=1)
         else:
             dt = frappe.db.sql("""
                 SELECT * FROM  `tabitem bin location`
@@ -559,7 +560,8 @@ class CustomStockEntry(StockEntry):
                         )
                     ):
                         bin_entry.stored_qty += bin_details.stored_qty
-                        bin_entry.area_use += bin_details.area_used
+                        bin_entry.area_use = bin_details.length * bin_details.width * (bin_details.height or 1) * bin_entry.stored_qty
+
                         return True
 
                 # Transfer to Quarantine: Update Location

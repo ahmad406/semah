@@ -547,7 +547,7 @@ frappe.ui.form.on('Storage details', {
             frappe.call({
                 method: "get_pallet",
                 doc: cur_frm.doc,
-                args: { "bin": storage.bin_location, "item_code": storage.item_code, "expiry": storage.expiry },
+                args: { "bin": storage.bin_location, "item_code": storage.item_code, "expiry": storage.expiry,batch: storage.batch ? storage.batch : storage.batch_no },
                 callback: function (r) {
                     if (r.message) {
                         console.log(r.message)
