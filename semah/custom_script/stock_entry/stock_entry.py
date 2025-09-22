@@ -303,7 +303,7 @@ class CustomStockEntry(StockEntry):
                     return True
         
             # If no match is found, throw an error
-            frappe.throw(f"Item not found for reverting: {bin_details.item_code} with batch {bin_details.batch}")
+            frappe.throw(f"Item not found for reverting: {bin_details.item_code} with batch {bin_details.batch_no}")
 
 
         def handle_bin(target_doc, bin_details, reduce=False):
@@ -312,7 +312,7 @@ class CustomStockEntry(StockEntry):
             The 'reduce' parameter determines whether to subtract stored_qty.
             """
             for bin in target_doc.bin:
-                if bin.batch_no == bin_details.batch and bin.bin_location == bin_details.bin_location and bin.warehouse == bin_details.t_ware_house and bin.pallet == bin_details.pallet:
+                if bin.batch_no == bin_details.batch_no and bin.bin_location == bin_details.bin_location and bin.warehouse == bin_details.t_ware_house and bin.pallet == bin_details.pallet:
                     # Update stored_qty and area use
                     if reduce:
                         bin.stored_qty -= bin_details.stored_qty
@@ -331,14 +331,14 @@ class CustomStockEntry(StockEntry):
 
             # If reducing and no match found, raise error
             if reduce:
-                frappe.throw(f"Item Not Found: {bin_details.item_code} with batch {bin_details.batch} at location {bin_details.bin_location}.")
+                frappe.throw(f"Item Not Found: {bin_details.item_code} with batch {bin_details.batch_no} at location {bin_details.bin_location}.")
 
             # Append a new bin if no match is found and reducing is not intended
             new_bin = target_doc.append("bin", {})
             new_bin.update({
                 "warehouse": bin_details.t_ware_house,
                 "bin_location": bin_details.bin_location,
-                "batch_no": bin_details.batch,
+                "batch_no": bin_details.batch_no,
                 "expiry": bin_details.expiry,
                 "stored_qty": bin_details.stored_qty,
                 "pallet": bin_details.pallet,
@@ -550,7 +550,7 @@ class CustomStockEntry(StockEntry):
                 # Material Receipt: Add Quantity
                 if action == 'add':
                     if (
-                        bin_details.batch == bin_entry.batch_no
+                        bin_details.batch_no == bin_entry.batch_no
                         and bin_entry.bin_location == bin_details.bin_location
                         and bin_entry.warehouse == bin_details.t_ware_house
                          and bin_entry.pallet == bin_details.pallet
@@ -583,7 +583,7 @@ class CustomStockEntry(StockEntry):
                 # Quarantine Item Issue to Customer: Reduce Quantity
                 elif action == 'reduce':
                     if (
-                        bin_entry.batch_no == bin_details.batch
+                        bin_entry.batch_no == bin_details.batch_no
                         and bin_entry.bin_location == bin_details.bin_location
                         and bin_entry.warehouse == bin_details.t_ware_house
                         and bin_entry.pallet == bin_details.pallet
@@ -602,7 +602,7 @@ class CustomStockEntry(StockEntry):
                     {
                         "warehouse": bin_details.t_ware_house,
                         "bin_location": bin_details.bin_location,
-                        "batch_no": bin_details.batch,
+                        "batch_no": bin_details.batch_no,
                         "expiry": bin_details.expiry,
                         "stored_qty": bin_details.stored_qty,
                         "stored_in": bin_details.display_stored_in,
@@ -631,7 +631,7 @@ class CustomStockEntry(StockEntry):
 
             elif self.stock_entry_type == 'Quarantine Item Issue to Customer':
                 if not update_or_create_bin(target_doc, item, action='reduce'):
-                    frappe.throw(f"Item not found: {item.item_code} with batch {item.batch}")
+                    frappe.throw(f"Item not found: {item.item_code} with batch {item.batch_no}")
             
 
             target_doc.save()
