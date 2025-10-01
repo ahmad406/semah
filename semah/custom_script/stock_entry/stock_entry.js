@@ -338,6 +338,13 @@ if (in_list(["Transfer to Quarantine", "Quarantine Item Issue to Customer"], cur
         }
     },
     to_warehouse: function (frm) {
+        if (cur_frm.doc.stock_entry_type == "Material Receipt" && frm.doc.to_warehouse) {
+            (frm.doc.storage_details || []).forEach(row => {
+                frappe.model.set_value(row.doctype, row.name, "t_ware_house", frm.doc.to_warehouse);
+            });
+            frm.refresh_field("storage_details");
+        }
+
         // if (cur_frm.doc.to_warehouse) {
         //     frappe.db.get_doc('Warehouse', cur_frm.doc.to_warehouse)
         //         .then(r => {
