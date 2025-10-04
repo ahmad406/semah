@@ -223,12 +223,21 @@ class TransferBin(Document):
 		if data:
 			frappe.throw("Preparation Order Note already created against this bin: {0}".format(data[0]['name']))
 	def validate_transfer(self):
-		target=frappe.get_doc("Bin Name",self.target_bin)
-		if target.status=="Occupied":
-			frappe.throw("Target Bin is already Occupied :{}".format(self.target_bin))
-		source=frappe.get_doc("Bin Name",self.source_bin)
-		if source.status=="Vacant":
-			frappe.throw("Source Bin is Vacant :{}".format(self.source_bin))
+		# Check target bin
+		target = frappe.get_doc("Bin Name", self.target_bin)
+		if target.status == "Occupied":
+			frappe.throw(f"Target Bin is already Occupied : {self.target_bin}")
+
+		if frappe.db.exists("Item Bin Location", {"bin_location": self.target_bin, "stored_qty": (">", 0)}):
+			frappe.throw(f"Target Bin is already Occupied : {self.target_bin}")
+
+		# Check source bin
+		source = frappe.get_doc("Bin Name", self.source_bin)
+		if source.status == "Vacant":
+			frappe.throw(f"Source Bin is Vacant : {self.source_bin}")
+
+		if not frappe.db.exists("Item Bin Location", {"bin_location": self.source_bin, "stored_qty": (">", 0)}):
+			frappe.throw(f"Source Bin is Vacant : {self.source_bin}")
 
 	def on_submit(self):
 		sql="""select name from `tabitem bin location`   where bin_location = "{0}" and stored_qty > 0 """.format(self.source_bin)
