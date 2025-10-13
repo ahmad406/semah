@@ -228,7 +228,7 @@ class TransferBin(Document):
 		if target.status == "Occupied":
 			frappe.throw(f"Target Bin is already Occupied : {self.target_bin}")
 
-		if frappe.db.exists("Item Bin Location", {"bin_location": self.target_bin, "stored_qty": (">", 0)}):
+		if frappe.db.exists("item bin location", {"bin_location": self.target_bin, "stored_qty": (">", 0)}):
 			frappe.throw(f"Target Bin is already Occupied : {self.target_bin}")
 
 		# Check source bin
@@ -236,7 +236,7 @@ class TransferBin(Document):
 		if source.status == "Vacant":
 			frappe.throw(f"Source Bin is Vacant : {self.source_bin}")
 
-		if not frappe.db.exists("Item Bin Location", {"bin_location": self.source_bin, "stored_qty": (">", 0)}):
+		if not frappe.db.exists("item bin location", {"bin_location": self.source_bin, "stored_qty": (">", 0)}):
 			frappe.throw(f"Source Bin is Vacant : {self.source_bin}")
 
 	def on_submit(self):

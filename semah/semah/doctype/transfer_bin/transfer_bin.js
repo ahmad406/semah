@@ -23,6 +23,7 @@ frappe.ui.form.on('Transfer Bin', {
         showBarcodeScanner(frm, 'target_bin');
     },
     source_bin:function(frm){
+          cur_frm.set_df_property('source_detail', 'options', "No"); 
         cur_frm.set_value("source_barcode",frm.doc.source_bin)
         frm.trigger("show_bin_details")
 
@@ -46,6 +47,9 @@ frappe.ui.form.on('Transfer Bin', {
                     }
                  
                    cur_frm.refresh()
+                }
+                else{
+                     frm.set_df_property('source_detail', 'options', "No"); 
                 }
             }
         });

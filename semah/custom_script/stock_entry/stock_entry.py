@@ -868,7 +868,7 @@ class CustomStockEntry(StockEntry):
             if flt(d.qty) > 0.0 and d.get("batch_no") and self.get("posting_date") and self.docstatus < 2:
                 expiry_date = frappe.get_cached_value("Batch", d.get("batch_no"), "expiry_date")
                 if expiry_date and getdate(expiry_date) < getdate(self.posting_date) and self.stock_entry_type != 'Transfer to Quarantine':
-                    if  self.stock_entry_type != 'Quarantine Item Issue to Customer':
+                    if  self.stock_entry_type not in  ['Quarantine Item Issue to Customer','Material Receipt']:
                         frappe.throw(_("Row #{0}: The batch {1} has already expired.")
                             .format(d.idx, get_link_to_form("Batch", d.get("batch_no"))))
                         

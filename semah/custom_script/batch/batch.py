@@ -4,6 +4,7 @@ from frappe import _
 
 def validate(self,method=None):
     validate_change(self)
+    validate_manufacturing_date(self)
     # if self.item and self.expiry_date:
     #     if frappe.db.exists("Batch", {
     #         "item": self.item,
@@ -12,7 +13,9 @@ def validate(self,method=None):
     #     }):
     #         frappe.throw(_("A batch with this item and expiry date already exists."))
 
-
+def validate_manufacturing_date(self):
+    if self.manufacturing_date and self.manufacturing_date > frappe.utils.today():
+        frappe.throw(_("Manufacturing date cannot be in the future. It must be today or a past date."))
 def validate_change(self):
     if not self.is_new():
 
