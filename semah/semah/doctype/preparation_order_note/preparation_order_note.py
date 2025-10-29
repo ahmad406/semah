@@ -10,8 +10,67 @@ from frappe.model.document import Document
 
 from collections import defaultdict
 from frappe.utils import flt
+from semah.custom_script.delivery_note.delivery_note import convert_to_string
+
+
 
 class PreparationOrderNote(Document):
+	@frappe.whitelist()
+	def update_reserved_qty(self, is_reduced=None, is_cancel=False):
+		"""
+		Update reserved quantity for items in storage_details.
+		- is_reduced=True  : release reservation (Delivery Note submit)
+		- is_reduced=False : add reservation (Preparation Order or Delivery Cancel)
+		- is_cancel=True   : cancel flow; skip availability validation
+		"""
+
+		for storage in self.get('storage_details'):
+			reserved = False
+			# Always fetch item by item_code
+			item = frappe.get_doc("Item", storage.item)
+
+			# Ensure bin + pallet exist
+			if not storage.bin_location_name or not storage.pallet:
+				frappe.throw(
+					f"Reservation requires both bin location and pallet for item {storage.item} (row {storage.idx})"
+				)
+			
+			for bin_entry in item.bin:
+				if storage.bin_location_name == bin_entry.bin_location and storage.pallet == bin_entry.pallet:
+					if is_reduced:
+
+						if bin_entry.reserved_qty < storage.delivery_qty:
+							frappe.throw(
+								f"Cannot release {storage.delivery_qty} reserved qty from bin '{bin_entry.bin_location}' "
+								f"for item {storage.item}, pallet '{bin_entry.pallet}' — only {bin_entry.reserved_qty} reserved."
+							)
+						bin_entry.reserved_qty -= storage.delivery_qty
+					else:
+						if is_cancel:
+							
+							bin_entry.reserved_qty += storage.delivery_qty
+						else:
+							available_for_reserve = bin_entry.stored_qty - bin_entry.reserved_qty
+							if available_for_reserve < storage.delivery_qty:
+								frappe.throw(
+									f"Cannot reserve {storage.delivery_qty} from bin '{bin_entry.bin_location}' "
+									f"for item {storage.item}, pallet '{bin_entry.pallet}' — only {available_for_reserve} free to reserve."
+								)
+							bin_entry.reserved_qty += storage.delivery_qty
+
+					reserved = True
+					break 
+
+			if not reserved and not is_cancel:
+				frappe.throw(
+					f"No matching bin with available stock to reserve for item {storage.item} "
+					f"in warehouse '{storage.warehouse}' at bin '{storage.bin_location_name}' with pallet '{storage.pallet}'."
+				)
+
+			item.save()
+
+
+
 	@frappe.whitelist()
 	def update_storage_details(self):
 		all_rows = []
@@ -31,13 +90,13 @@ class PreparationOrderNote(Document):
 			if has_batch_no:
 				stock_rows = frappe.db.sql("""
 					SELECT * FROM `tabitem bin location`
-					WHERE parent = %s AND stored_qty > 0 AND expiry >= NOW()
+					WHERE parent = %s AND stored_qty - reserved_qty > 0 AND (expiry IS NULL OR expiry >= NOW())
 					ORDER BY expiry ASC, stored_qty ASC
 				""", (item_code,), as_dict=True)
 			else:
 				stock_rows = frappe.db.sql("""
 					SELECT * FROM `tabitem bin location`
-					WHERE parent = %s AND stored_qty > 0
+					WHERE parent = %s AND stored_qty - reserved_qty > 0
 					ORDER BY stored_qty ASC
 				""", (item_code,), as_dict=True)
 
@@ -45,8 +104,16 @@ class PreparationOrderNote(Document):
 				if qty_required <= 0:
 					break
 
-				delivery_qty = min(qty_required, stock.stored_qty)
+				available_qty = stock.stored_qty - stock.reserved_qty
+				if available_qty <= 0:
+					continue
+
+				delivery_qty = min(qty_required, available_qty)
 				qty_required -= delivery_qty
+
+				# ✅ Optionally, reserve the quantity immediately
+				frappe.db.set_value("Item Bin Location", stock.name, "reserved_qty",
+					(stock.reserved_qty or 0) + delivery_qty)
 
 				all_rows.append({
 					"batch_no": stock.get("batch_no"),
@@ -64,7 +131,7 @@ class PreparationOrderNote(Document):
 					"area_used": stock.area_use,
 					"stored_in": stock.stored_in,
 					"sub_customer": stock.sub_customer,
-					"height": stock.height if stock.height != 0 else None,
+					"height": stock.height or None,
 					"width": stock.width,
 					"length": stock.length,
 					"manufacture_date": stock.manufacturing_date,
@@ -74,23 +141,36 @@ class PreparationOrderNote(Document):
 			if qty_required > 0:
 				frappe.throw(f"Insufficient stock for item {item_code}")
 
+		# Sort rows by bin location for better readability
 		all_rows.sort(key=lambda x: x.get("bin_location_name") or "")
 
+		# Clear old storage_details and append new allocation
 		self.storage_details = []
 		for row in all_rows:
 			self.append("storage_details", row)
+
 		self.calculate_total_qty()
 		
 		
 
 	def on_submit(self):
-		frappe.db.sql("""update  `tabDelivery Request` set doc_status="To Make Delivery Note"
-		where name="{0}" """.format(self.delivery_request))
-		self.validate_scanned()
+		if self.delivery_request:
+			dr = frappe.get_doc("Delivery Request", self.delivery_request)
+			dr.db_set("doc_status", "To Make Delivery Note")
+
+		self.update_reserved_qty()
+		# if frappe.session.user!='Administrator':
+		# 	self.validate_scanned()
+	# def on_update_after_submit(self):
+	# 	self.validate_scanned()
+
+
 
 	def on_cancel(self):
-		frappe.db.sql("""update  `tabPreparation Order Note` set order_status="Cancelled"
-		where name="{0}" """.format(self.name))
+		self.db_set("order_status", "Cancelled")
+
+		self.update_reserved_qty(is_reduced=True)
+
 	def validate(self):
 		for i in self.item_grid:
 			for s in self.storage_details:
@@ -118,6 +198,7 @@ class PreparationOrderNote(Document):
 		
 
 
+
 	def validate_scanned(self):
 		scanned_map = defaultdict(float)
 		for d in self.scanned_items:
@@ -129,17 +210,27 @@ class PreparationOrderNote(Document):
 			key = (d.item, d.pallet)
 			storage_map[key] += flt(d.delivery_qty)
 
-		for key in storage_map:
-			if key not in scanned_map:
-				frappe.throw(f"Item {key[0]} Pallet {key[1]} exists in Storage but not in Scanned Items.")
+		allow_delivery = 1
 
-			if flt(scanned_map[key]) != flt(storage_map[key]):
-				frappe.throw(f"Mismatch in Delivery Qty for Item {key[0]}, Pallet {key[1]}: "
-							f"Scanned = {scanned_map[key]}, Storage = {storage_map[key]}")
+		for key, storage_qty in storage_map.items():
+			scanned_qty = scanned_map.get(key)
+			if scanned_qty is None:
+				allow_delivery = 0
+				frappe.throw(f"Item {key[0]} Pallet {key[1]} exists in Storage but not in Scanned Items.")
+			elif flt(scanned_qty) != flt(storage_qty):
+				allow_delivery = 0
+				frappe.throw(
+					f"Mismatch in Delivery Qty for Item {key[0]}, Pallet {key[1]}: "
+					f"Scanned = {scanned_qty}, Storage = {storage_qty}"
+				)
 
 		for key in scanned_map:
 			if key not in storage_map:
+				allow_delivery = 0
 				frappe.throw(f"Item {key[0]} Pallet {key[1]} exists in Scanned but not in Storage.")
+
+		self.allow_delivery = allow_delivery   
+
 
 
 	def validate_required_item(self):
@@ -239,7 +330,7 @@ class PreparationOrderNote(Document):
 						p.stock_uom, p.item_name,p.description,
 						p.name AS item_code,c.batch_no AS batch, c.warehouse,
 						c.bin_location, c.expiry, c.stored_in, c.length, c.width, c.height,
-						c.area_use, c.stored_qty, c.manufacturing_date, c.pallet
+						c.area_use, c.stored_qty as stored_qty, c.manufacturing_date, c.pallet
 					FROM `tabitem bin location` c
 					INNER JOIN `tabItem` p ON c.parent = p.name
 					
@@ -254,7 +345,7 @@ class PreparationOrderNote(Document):
 						p.stock_uom, p.item_name,p.description,
 						p.name AS item_code,c.batch_no AS batch, c.warehouse,
 						c.bin_location, c.expiry, c.stored_in, c.length, c.width, c.height,
-						c.area_use, c.stored_qty, c.manufacturing_date, c.pallet
+						c.area_use,  c.stored_qty as stored_qty, c.manufacturing_date, c.pallet
 					FROM `tabitem bin location` c
 					INNER JOIN `tabItem` p ON c.parent = p.name
 					
@@ -394,6 +485,12 @@ def is_batch_item(item_code):
 
 @frappe.whitelist()
 def make_delivery_note(source_name, target_doc=None):
+	source_doc = frappe.get_doc("Preparation Order Note", source_name)
+
+
+	source_doc.validate_scanned()
+
+
 	def set_missing_values(source, target):
 		delivery_note = frappe.get_doc(target)
 	doclist = get_mapped_doc("Preparation Order Note", source_name, {
@@ -509,3 +606,7 @@ def bin_filter(doctype, txt, searchfield, start, page_len, filters):
 
 
 	return frappe.db.sql(query, args, as_dict=False)
+
+
+
+

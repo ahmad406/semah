@@ -1,0 +1,245 @@
+{
+ "actions": [],
+ "autoname": "WB-SHIP-.#####",
+ "creation": "2025-10-29 15:42:10.576122",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "waybill_number",
+  "column_break_2",
+  "date",
+  "section_break_1",
+  "shipper_name",
+  "shipper_address",
+  "column_break_6",
+  "shipper_contact",
+  "section_break_2",
+  "consignee_name",
+  "consignee_address",
+  "column_break_12",
+  "consignee_contact",
+  "section_break_3",
+  "truck_no",
+  "iqama_no",
+  "driver_name",
+  "driver_contact",
+  "plate_no",
+  "column_break_17",
+  "loading_site",
+  "loading_datetime",
+  "unloading_site",
+  "unloading_datetime",
+  "section_break_4",
+  "shipment_items",
+  "section_break_5",
+  "cargo_condition",
+  "delivery_remarks",
+  "column_break_31",
+  "customer_authorized_name",
+  "consignee_authorized_name",
+  "customer_signature_date",
+  "consignee_signature_date"
+ ],
+ "fields": [
+  {
+   "fieldname": "waybill_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Waybill No",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_1",
+   "fieldtype": "Section Break",
+   "label": "Shipper Details"
+  },
+  {
+   "fieldname": "shipper_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Shipper Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "shipper_address",
+   "fieldtype": "Data",
+   "label": "Shipper Address"
+  },
+  {
+   "fieldname": "shipper_contact",
+   "fieldtype": "Data",
+   "label": "Shipper Contact"
+  },
+  {
+   "fieldname": "section_break_2",
+   "fieldtype": "Section Break",
+   "label": "Consignee Details"
+  },
+  {
+   "fieldname": "consignee_name",
+   "fieldtype": "Data",
+   "label": "Consignee Name"
+  },
+  {
+   "fieldname": "consignee_address",
+   "fieldtype": "Data",
+   "label": "Consignee Address"
+  },
+  {
+   "fieldname": "consignee_contact",
+   "fieldtype": "Data",
+   "label": "Consignee Contact"
+  },
+  {
+   "fieldname": "section_break_3",
+   "fieldtype": "Section Break",
+   "label": "Vehicle Details"
+  },
+  {
+   "fieldname": "truck_no",
+   "fieldtype": "Data",
+   "label": "Truck No"
+  },
+  {
+   "fieldname": "iqama_no",
+   "fieldtype": "Data",
+   "label": "Iqama No"
+  },
+  {
+   "fieldname": "driver_name",
+   "fieldtype": "Data",
+   "label": "Driver Name"
+  },
+  {
+   "fieldname": "driver_contact",
+   "fieldtype": "Data",
+   "label": "Driver Contact"
+  },
+  {
+   "fieldname": "plate_no",
+   "fieldtype": "Data",
+   "label": "Plate No"
+  },
+  {
+   "fieldname": "loading_site",
+   "fieldtype": "Data",
+   "label": "Loading Site"
+  },
+  {
+   "fieldname": "loading_datetime",
+   "fieldtype": "Datetime",
+   "label": "Loading Date & Time"
+  },
+  {
+   "fieldname": "unloading_site",
+   "fieldtype": "Data",
+   "label": "Unloading Site"
+  },
+  {
+   "fieldname": "unloading_datetime",
+   "fieldtype": "Datetime",
+   "label": "Unloading Date & Time"
+  },
+  {
+   "fieldname": "section_break_4",
+   "fieldtype": "Section Break",
+   "label": "Shipment Details"
+  },
+  {
+   "fieldname": "shipment_items",
+   "fieldtype": "Table",
+   "label": "Shipment Items",
+   "options": "Waybill Shipment Item"
+  },
+  {
+   "fieldname": "section_break_5",
+   "fieldtype": "Section Break",
+   "label": "Delivery Confirmation"
+  },
+  {
+   "fieldname": "cargo_condition",
+   "fieldtype": "Select",
+   "label": "Cargo Condition",
+   "options": "Good Condition\nWith Remarks"
+  },
+  {
+   "depends_on": "eval:doc.cargo_condition === 'With Remarks'",
+   "fieldname": "delivery_remarks",
+   "fieldtype": "Text",
+   "label": "Delivery Remarks"
+  },
+  {
+   "fieldname": "customer_authorized_name",
+   "fieldtype": "Data",
+   "label": "Customer Authorized Name"
+  },
+  {
+   "fieldname": "consignee_authorized_name",
+   "fieldtype": "Data",
+   "label": "Consignee Authorized Name"
+  },
+  {
+   "fieldname": "customer_signature_date",
+   "fieldtype": "Date",
+   "label": "Customer Signature Date"
+  },
+  {
+   "fieldname": "consignee_signature_date",
+   "fieldtype": "Date",
+   "label": "Consignee Signature Date"
+  },
+  {
+   "fieldname": "column_break_17",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_12",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_31",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "links": [],
+ "modified": "2025-10-29 15:58:16.226376",
+ "modified_by": "Administrator",
+ "module": "Semah",
+ "name": "Waybill",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "All",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "waybill_number",
+ "track_changes": 1
+}

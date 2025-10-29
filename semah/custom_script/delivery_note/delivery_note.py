@@ -5,10 +5,23 @@ from erpnext.stock.doctype.delivery_note.delivery_note import  DeliveryNote
 from erpnext.stock.doctype.delivery_note.delivery_note import *
 
 class CustomDeliveryNote(DeliveryNote):
+    def update_preparation_order(self, is_canceled=None):
+        if not self.prepration:
+            frappe.throw("Preparation Order is not linked.")
+
+        order = frappe.get_doc('Preparation Order Note', self.prepration)
+
+        if is_canceled:
+            # Cancel = restore reservation but skip validation
+            order.update_reserved_qty(is_reduced=False, is_cancel=True)
+        else:
+            # Submit = consume reservation
+            order.update_reserved_qty(is_reduced=True)
     @frappe.whitelist()
     def before_submit(self):
         self.update_bin_status()
         self.update_pon_status()
+        self.update_preparation_order()
 
         def calculate_area_use(length, width, height, stored_qty):
             """Calculate the area use based on dimensions and stored quantity."""
@@ -95,6 +108,8 @@ class CustomDeliveryNote(DeliveryNote):
                     f"No matching bin entry found to revert for item {storage.item_code} "
                     f"in warehouse '{storage.warehouse}' at bin '{storage.bin_location_name}' with pallet '{storage.pallet}'."
                 )
+        self.update_preparation_order(is_canceled=True)
+        
     def update_bin_status(self, canceled=False):
         for row in self.get("storage_details"):
             bin_name = row.bin_location_name

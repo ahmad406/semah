@@ -13,7 +13,7 @@ def execute(filters=None):
 	frappe.errprint(conditions)
 	sql = """				
 	 select  p.customer_ as customer,p.stock_uom,p.item_name,p.sku,p.disabled,p.name as item_code,
-	 b.customer_batch_id,c.batch_no as batch,c.sub_customer,c.warehouse,p.has_batch_no,c.bin_location,
+	 b.customer_batch_id,c.batch_no as batch,c.sub_customer,c.warehouse,p.has_batch_no,c.bin_location,c.reserved_qty,
 	 c.batch_no,c.expiry,c.stored_in,c.length,c.width,c.height,c.area_use,c.stored_qty,c.manufacturing_date,
 	 c.pallet
 	   from `tabitem bin location` c
@@ -49,6 +49,10 @@ def execute(filters=None):
 						"width" : i.width,
 						"pallet" : i.pallet,
 						"area_used" :i.area_use,
+						"reserved_qty" :i.reserved_qty,
+						"available_qty" :i.stored_qty-i.reserved_qty,
+
+
 				})
 
 		columns = get_columns()
@@ -140,11 +144,24 @@ def get_columns():
 
 		},
 		{
+	 		'fieldname': "reserved_qty" ,
+            'label':('Reserved Qty'),
+            'fieldtype': 'Float',
+			'width': 200
+        },
+		{
 	 		'fieldname': "stored_qty" ,
             'label':('Stored Qty'),
             'fieldtype': 'Float',
 			'width': 200
         },
+				{
+	 		'fieldname': "available_qty" ,
+            'label':('Available Qty'),
+            'fieldtype': 'Float',
+			'width': 200
+        },
+
 		{
 			'label': _('Default unit of measurement'),
 			'fieldname': "uom",

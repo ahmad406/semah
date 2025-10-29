@@ -1,0 +1,32 @@
+{
+ "custom_fields": [],
+ "custom_perms": [],
+ "doctype": "Preparation Storage Details",
+ "property_setters": [
+  {
+   "_assign": null,
+   "_comments": null,
+   "_liked_by": null,
+   "_user_tags": null,
+   "creation": "2025-08-27 13:46:28.434702",
+   "default_value": null,
+   "doc_type": "Preparation Storage Details",
+   "docstatus": 0,
+   "doctype_or_field": "DocField",
+   "field_name": "delivery_qty",
+   "idx": 0,
+   "modified": "2023-12-20 10:15:22.485837",
+   "modified_by": "Administrator",
+   "name": "Preparation Storage Details-delivery_qty-precision",
+   "owner": "Administrator",
+   "parent": null,
+   "parentfield": null,
+   "parenttype": null,
+   "property": "precision",
+   "property_type": "Select",
+   "row_name": null,
+   "value": "0"
+  }
+ ],
+ "sync_on_migrate": 1
+}

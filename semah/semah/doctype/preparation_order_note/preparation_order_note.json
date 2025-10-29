@@ -11,6 +11,7 @@
   "customer",
   "sub_customer",
   "bulk_stock_entry",
+  "allow_delivery",
   "delivery_request",
   "warehouse",
   "column_break_4",
@@ -225,6 +226,7 @@
    "label": "Total Delivery Quantity"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "barcode",
    "fieldtype": "Data",
    "label": "Barcode"
@@ -235,22 +237,26 @@
    "label": "Scan Barcode"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "qty",
    "fieldtype": "Float",
    "label": "Qty Required"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "insert",
    "fieldtype": "Button",
    "label": "Insert"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "scanned_items",
    "fieldtype": "Table",
    "label": "scanned Items",
    "options": "Preparation Storage Details barcode"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "actual_qty",
    "fieldtype": "Float",
    "label": "Actual Qty",
@@ -261,6 +267,7 @@
    "fieldtype": "Section Break"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "scanned_qty",
    "fieldtype": "Float",
    "label": "Scanned Qty",
@@ -275,12 +282,19 @@
    "fieldname": "bulk_stock_entry",
    "fieldtype": "Check",
    "label": "Is Bulk Entry"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "allow_delivery",
+   "fieldtype": "Data",
+   "label": "Allow Delivery",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-26 18:13:14.242337",
+ "modified": "2025-10-01 18:07:01.910412",
  "modified_by": "Administrator",
  "module": "Semah",
  "name": "Preparation Order Note",
