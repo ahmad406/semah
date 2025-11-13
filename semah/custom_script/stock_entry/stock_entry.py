@@ -532,7 +532,7 @@ class CustomStockEntry(StockEntry):
 
                 if not bin_name:
                     frappe.throw(f"Bin location missing in row {row.idx or '[unknown]'}")
-                frappe.db.set_value("Bin Name", bin_name, "status", "Vacant")
+                # frappe.db.set_value("Bin Name", bin_name, "status", "Vacant")
 
 
     @frappe.whitelist()
