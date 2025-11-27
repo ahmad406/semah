@@ -60,7 +60,8 @@ frappe.ui.form.on('Preparation Order Note', {
             args: { "insert": true },
             callback: function (r) {
                 if (r.message) {
-                    cur_frm.refresh()
+                    cur_frm.dirty()
+                    cur_frm.save()
 
                 }
             }

@@ -534,9 +534,22 @@ class CustomStockEntry(StockEntry):
                     frappe.throw(f"Bin location missing in row {row.idx or '[unknown]'}")
                 # frappe.db.set_value("Bin Name", bin_name, "status", "Vacant")
 
+    def validate_mandatory_bin(self):
+        missing = []
+
+        for item in self.get("storage_details"):
+            if not item.bin_location:
+                missing.append(f"Row {item.idx}: Bin Location is missing")
+
+        if missing:
+            frappe.throw(
+                "<b>Bin Location Missing:</b><br>" + "<br>".join(missing)
+            )
+
 
     @frappe.whitelist()
     def before_submit(self):
+        self.validate_mandatory_bin()
         self.create_pallet()
         self.validate_pallet_capacity()
         self.update_bin_status(not_canceled=True)
