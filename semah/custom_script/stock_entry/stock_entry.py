@@ -1180,13 +1180,14 @@ def get_bin(doctype, txt, searchfield, start, page_len, filters):
         args.append(bin_row)
     args += [page_len, start]
 
-    rows= frappe.db.sql(query, args, as_dict=False)
+    rows= frappe.db.sql(query, args, as_dict=True)
     out = []
     for r in rows:
         if frappe.has_permission("Bin Name", "read", r["bin_location"]):
             out.append((r["bin_location"], r["status_type"], r["bal"]))
 
     return out
+
 
 
 
