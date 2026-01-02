@@ -1180,7 +1180,15 @@ def get_bin(doctype, txt, searchfield, start, page_len, filters):
         args.append(bin_row)
     args += [page_len, start]
 
-    return frappe.db.sql(query, args, as_dict=False)
+    rows= frappe.db.sql(query, args, as_dict=False)
+    out = []
+    for r in rows:
+        if frappe.has_permission("Bin Name", "read", r["bin_location"]):
+            out.append((r["bin_location"], r["status_type"], r["bal"]))
+
+    return out
+
+
 
 # @frappe.whitelist()
 # @frappe.validate_and_sanitize_search_inputs
