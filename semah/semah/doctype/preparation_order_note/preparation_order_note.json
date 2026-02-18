@@ -16,6 +16,7 @@
   "warehouse",
   "column_break_4",
   "requested_date",
+  "note",
   "required_date",
   "customer_address_and_contact_section",
   "customer_primary_address",
@@ -289,12 +290,17 @@
    "fieldtype": "Data",
    "label": "Allow Delivery",
    "read_only": 1
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Long Text",
+   "label": "Note"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-01 18:07:01.910412",
+ "modified": "2026-02-18 21:41:21.911282",
  "modified_by": "Administrator",
  "module": "Semah",
  "name": "Preparation Order Note",
