@@ -112,7 +112,7 @@ class PreparationOrderNote(Document):
 				qty_required -= delivery_qty
 
 				# ✅ Optionally, reserve the quantity immediately
-				frappe.db.set_value("Item Bin Location", stock.name, "reserved_qty",
+				frappe.db.set_value("item bin location", stock.name, "reserved_qty",
 					(stock.reserved_qty or 0) + delivery_qty)
 
 				all_rows.append({
