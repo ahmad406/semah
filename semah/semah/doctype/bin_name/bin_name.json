@@ -32,8 +32,7 @@
    "fieldtype": "Select",
    "label": "Status",
    "no_copy": 1,
-   "options": "Vacant\nPartially Occupied\nOccupied",
-   "read_only": 1
+   "options": "Vacant\nPartially Occupied\nOccupied"
   },
   {
    "fieldname": "bin_row",
@@ -44,7 +43,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-29 11:06:11.830105",
+ "modified": "2026-03-01 11:56:46.083727",
  "modified_by": "Administrator",
  "module": "Semah",
  "name": "Bin Name",

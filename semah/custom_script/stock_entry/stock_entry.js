@@ -52,18 +52,22 @@ frappe.ui.form.on("Stock Entry", {
     onload: function (frm) {
         $('[data-fieldname="sub"]').css("display", "none");
         cur_frm.set_df_property('sub_customer', 'label', 'Sub Customer');
-        if (frm.is_new()) {
-            cur_frm.clear_table("storage_details");
-            cur_frm.set_value("total_area_used", undefined)
-        }else{
-              if (in_list(["Transfer to Quarantine", "Quarantine Item Issue to Customer"], cur_frm.doc.stock_entry_type)) {
+        setTimeout(() => {
 
-            cur_frm.set_df_property("storage_details", "read_only", 1)
-        }
-        else {
-            cur_frm.set_df_property("storage_details", "read_only", 0)
-        }
-        }
+
+            if (frm.is_new()) {
+                cur_frm.clear_table("storage_details");
+                cur_frm.set_value("total_area_used", undefined)
+            } else {
+                if (in_list(["Transfer to Quarantine", "Quarantine Item Issue to Customer"], cur_frm.doc.stock_entry_type)) {
+
+                    cur_frm.set_df_property("storage_details", "read_only", 1)
+                }
+                else {
+                    cur_frm.set_df_property("storage_details", "read_only", 0)
+                }
+            }
+        }, 300);
 
     },
     update_item: function (frm) {
@@ -192,24 +196,24 @@ frappe.ui.form.on("Stock Entry", {
                 }
             });
         }
-        $(frm.wrapper).on('grid-row-render', function (e, grid_row) {
-            if (in_list(['Storage details'], grid_row.doc.doctype)) {
-                // if (grid_row) {
-                //     if (grid_row.doc.display_stored_in == "Pallet") {
-                //         grid_row.columns_list[8].df.read_only = 1
-                //     }
-                // }
-            }
-if (in_list(["Transfer to Quarantine", "Quarantine Item Issue to Customer"], cur_frm.doc.stock_entry_type)) {
+        // $(frm.wrapper).on('grid-row-render', function (e, grid_row) {
+        //     if (in_list(['Storage details'], grid_row.doc.doctype)) {
+        //         // if (grid_row) {
+        //         //     if (grid_row.doc.display_stored_in == "Pallet") {
+        //         //         grid_row.columns_list[8].df.read_only = 1
+        //         //     }
+        //         // }
+        //     }
+        //     if (in_list(["Transfer to Quarantine", "Quarantine Item Issue to Customer"], cur_frm.doc.stock_entry_type)) {
 
-                if (in_list(['Stock Entry Detail'], grid_row.doc.doctype)) {
-                    if (grid_row) {
-                        grid_row.columns_list[1].df.read_only = 1
-                         grid_row.columns_list[2].df.read_only = 1
-                    }
-                }
-            }
-        });
+        //         if (in_list(['Stock Entry Detail'], grid_row.doc.doctype)) {
+        //             if (grid_row) {
+        //                 grid_row.columns_list[1].df.read_only = 1
+        //                 grid_row.columns_list[2].df.read_only = 1
+        //             }
+        //         }
+        //     }
+        // });
 
     },
 
@@ -439,7 +443,7 @@ if (in_list(["Transfer to Quarantine", "Quarantine Item Issue to Customer"], cur
             },
         });
         cur_frm.refresh_fields("storage_details")
-  if (in_list(["Transfer to Quarantine", "Quarantine Item Issue to Customer"], cur_frm.doc.stock_entry_type)) {
+        if (in_list(["Transfer to Quarantine", "Quarantine Item Issue to Customer"], cur_frm.doc.stock_entry_type)) {
 
             cur_frm.set_df_property("storage_details", "read_only", 1)
         }
@@ -554,13 +558,13 @@ frappe.ui.form.on('Storage details', {
             frappe.call({
                 method: "get_pallet",
                 doc: cur_frm.doc,
-                args: { "bin": storage.bin_location, "item_code": storage.item_code, "expiry": storage.expiry,batch: storage.batch ? storage.batch : storage.batch_no },
+                args: { "bin": storage.bin_location, "item_code": storage.item_code, "expiry": storage.expiry, batch: storage.batch ? storage.batch : storage.batch_no },
                 callback: function (r) {
                     if (r.message) {
                         storage.pallet = r.message
-                    
+
                     }
-                        cur_frm.save()
+                    cur_frm.save()
                 }
             });
         }

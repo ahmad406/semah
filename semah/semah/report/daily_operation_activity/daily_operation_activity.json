@@ -1,5 +1,5 @@
 {
- "add_total_row": 0,
+ "add_total_row": 1,
  "columns": [],
  "creation": "2025-02-10 12:57:28.131196",
  "disable_prepared_report": 0,
@@ -10,7 +10,7 @@
  "idx": 0,
  "is_standard": "Yes",
  "letter_head": "Semah LH",
- "modified": "2025-02-10 12:57:28.131196",
+ "modified": "2025-02-10 13:28:25.498169",
  "modified_by": "Administrator",
  "module": "Semah",
  "name": "Daily Operation Activity",

@@ -112,8 +112,8 @@ class PreparationOrderNote(Document):
 				qty_required -= delivery_qty
 
 				# ✅ Optionally, reserve the quantity immediately
-				frappe.db.set_value("item bin location", stock.name, "reserved_qty",
-					(stock.reserved_qty or 0) + delivery_qty)
+				# frappe.db.set_value("item bin location", stock.name, "reserved_qty",
+				# 	(stock.reserved_qty or 0) + delivery_qty)
 
 				all_rows.append({
 					"batch_no": stock.get("batch_no"),
@@ -146,10 +146,15 @@ class PreparationOrderNote(Document):
 
 		# Clear old storage_details and append new allocation
 		self.storage_details = []
+		frappe.errprint([len(self.storage_details), "self"])
 		for row in all_rows:
 			self.append("storage_details", row)
+		frappe.errprint([len(self.storage_details), "self2"])
+		
 
 		self.calculate_total_qty()
+		frappe.errprint([len(self.storage_details), "self4"])
+
 		
 		
 
@@ -238,6 +243,7 @@ class PreparationOrderNote(Document):
 
 		for row in self.storage_details:
 			if row.item not in item_list:
+				frappe.errprint([row.item,row.idx, item_list])
 				frappe.throw(
 					_("Item <b>{0}</b> in Storage Details is not listed in Item Grid.").format(row.item),
 					title=_("Validation Error")

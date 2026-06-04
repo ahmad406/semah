@@ -2,10 +2,11 @@ var read = 0
 erpnext.SerialNoBatchSelector = Class.extend({
 	init: function (opts, show_dialog) {
 		$.extend(this, opts);
-		if (this.frm.doc.stock_entry_type == 'Transfer to Quarantine') {
-			read = 1
-		}
-		else {
+		if (this.frm.doc.stock_entry_type === 'Quarantine Item Issue to Customer') {
+			read = 1   // selected_qty = 0, editable
+		} else if (this.frm.doc.stock_entry_type === 'Transfer to Quarantine') {
+			read = 2   // selected_qty = available_qty, readonly
+		} else {
 			read = 0
 		}
 		this.show_dialog = show_dialog;
@@ -365,7 +366,8 @@ erpnext.SerialNoBatchSelector = Class.extend({
 								return {
 									filters: {
 										item_code: me.item_code,
-										warehouse: me.warehouse || typeof me.warehouse_details.name == "string" ? me.warehouse_details.name : ''
+										warehouse: me.warehouse || typeof me.warehouse_details.name == "string" ? me.warehouse_details.name : '',
+										posting_date:cur_frm.doc.posting_date
 									},
 									query: 'semah.custom_script.stock_entry.stock_entry.get_batch_no'
 								};
@@ -374,9 +376,11 @@ erpnext.SerialNoBatchSelector = Class.extend({
 								return {
 									filters: {
 										item_code: me.item_code,
-										warehouse: me.warehouse || typeof me.warehouse_details.name == "string" ? me.warehouse_details.name : ''
+										warehouse: me.warehouse || typeof me.warehouse_details.name == "string" ? me.warehouse_details.name : '',
+										posting_date:cur_frm.doc.posting_date
+
 									},
-									query: 'erpnext.controllers.queries.get_batch_no'
+									query: 'semah.custom_script.stock_entry.stock_entry.get_batch_no'
 								};
 							}
 						},
@@ -407,15 +411,18 @@ erpnext.SerialNoBatchSelector = Class.extend({
 									args: {
 										batch_no,
 										warehouse: me.warehouse_details.name,
-										item_code: me.item_code
+										item_code: me.item_code,
+										for_stock_levels:1
 									},
 									callback: (r) => {
 										this.grid_row.on_grid_fields_dict
 											.available_qty.set_value(r.message || 0);
-										if (read != 0) {
+										if (read !== 1) {
+											// Transfer to Quarantine (read==2) and normal (read==0): mirror available qty
 											this.grid_row.on_grid_fields_dict
 												.selected_qty.set_value(r.message || 0);
 										}
+										// Quarantine Item Issue to Customer (read==1): leave selected_qty at 0
 									}
 								});
 
@@ -423,7 +430,6 @@ erpnext.SerialNoBatchSelector = Class.extend({
 								this.set_value("");
 								frappe.throw(__('Please select a warehouse to get available quantities'));
 							}
-							// e.stopImmediatePropagation();
 						}
 					},
 					{
@@ -433,15 +439,10 @@ erpnext.SerialNoBatchSelector = Class.extend({
 						'label': __('Available'),
 						'in_list_view': 1,
 						'default': 0,
-						change: function () {
-							if (read == 0) {
-								this.grid_row.on_grid_fields_dict.selected_qty.set_value('0');
-							}
-						}
 					},
 					{
 						'fieldtype': 'Float',
-						'read_only': read,
+						'read_only': read === 2 ? 1 : 0,
 						'fieldname': 'selected_qty',
 						'label': __('Qty'),
 						'in_list_view': 1,

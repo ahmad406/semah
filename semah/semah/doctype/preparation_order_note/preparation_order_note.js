@@ -61,7 +61,9 @@ frappe.ui.form.on('Preparation Order Note', {
             callback: function (r) {
                 if (r.message) {
                     cur_frm.dirty()
-                    cur_frm.save()
+                    // cur_frm.save()
+                    cur_frm.refresh()
+
 
                 }
             }
@@ -191,7 +193,7 @@ frappe.ui.form.on('Preparation Order Note', {
                                 cur_frm.clear_table("item_grid");
                                 cur_frm.set_value("sub_customer", doc.sub_customer)
                                 cur_frm.set_value("delivery_request", doc.name)
-                                cur_frm.set_value("warehouse", doc.sub_customer)
+                                // cur_frm.set_value("warehouse", doc.sub_customer)
                                 cur_frm.set_value("requested_date", doc.requested_date)
                                 cur_frm.set_value("required_date", doc.required_date)
                                 cur_frm.set_value("customer_primary_address", doc.address_html)
@@ -262,32 +264,35 @@ frappe.ui.form.on('Preparation Order Note', {
     },
 
 
-    before_save: function (frm) {
-        var storage = cur_frm.doc.storage_details
-        var row = cur_frm.add_child("storage_details");
-        cur_frm.clear_table("tem");
-        Object.entries(storage).forEach(([key, value]) => {
-            var row = cur_frm.add_child("tem");
-            row.item = value["item"]
-            row.warehouse = value["warehouse"]
-            // row.bin_location_name = value["bin_location_name"]
-            row.batch_no = value["batch_no"]
-            row.delivery_qty = value["delivery_qty"]
-            row.expiry_date = value["expiry_date"]
-            row.qty_required = value["qty_required"]
-            row.required_date = value["required_date"]
-            row.uom = value["uom"]
-            row.item_name = value["item_name"]
-            row.description = value["description"]
-            frappe.db.get_value('Batch', value["batch_no"], 'customer_batch_id')
-                .then(r => {
-                    if (r.message.customer_batch_id) {
-                        row.customer_batch_id = r.message.customer_batch_id
-                    }
-                })
-        })
-    },
+before_save: function (frm) {
+    var storage = cur_frm.doc.storage_details;
 
+    cur_frm.clear_table("tem");
+
+    Object.entries(storage).forEach(([key, value]) => {
+        var row = cur_frm.add_child("tem");
+
+        row.item = value["item"];
+        row.warehouse = value["warehouse"];
+        row.batch_no = value["batch_no"];
+        row.delivery_qty = value["delivery_qty"];
+        row.expiry_date = value["expiry_date"];
+        row.qty_required = value["qty_required"];
+        row.required_date = value["required_date"];
+        row.uom = value["uom"];
+        row.item_name = value["item_name"];
+        row.description = value["description"];
+
+        frappe.db.get_value('Batch', value["batch_no"], 'customer_batch_id')
+            .then(r => {
+                if (r.message.customer_batch_id) {
+                    row.customer_batch_id = r.message.customer_batch_id;
+                }
+            });
+    });
+
+    frm.refresh_field("tem");
+},
 
     update_storage: function (frm, cdt, cdn) {
         frappe.call({
@@ -479,61 +484,61 @@ frappe.ui.form.on('Preparation Order Note', {
             }
         });
     },
-    validate: function (frm) {
-        var storage = frm.doc.storage_details
-        var item = frm.doc.item_grid
-        var qty = 0
-        for (var i = 0; i < item.length; i++) {
-            qty = 0;
-            var items = $.grep(storage, function (element, index) {
-                return element.item == item[i].item_code;
-            });
-            if (items.length > 0) {
-                for (var j = 0; j < items.length; j++) {
-                    qty = qty + items[j].delivery_qty
-                }
-            }
-            if (qty == 0) {
-                frappe.throw("Delivery Qty should not be greater or lesser than Required Qty!!");
+    // validate: function (frm) {
+    //     var storage = frm.doc.storage_details
+    //     var item = frm.doc.item_grid
+    //     var qty = 0
+    //     for (var i = 0; i < item.length; i++) {
+    //         qty = 0;
+    //         var items = $.grep(storage, function (element, index) {
+    //             return element.item == item[i].item_code;
+    //         });
+    //         if (items.length > 0) {
+    //             for (var j = 0; j < items.length; j++) {
+    //                 qty = qty + items[j].delivery_qty
+    //             }
+    //         }
+    //         if (qty == 0) {
+    //             frappe.throw("Delivery Qty should not be greater or lesser than Required Qty!!");
 
-            }
-            if (qty > 0 && (qty < item[i].qty_required || qty > item[i].qty_required)) {
-                frappe.msgprint("Delivery Qty should not be greater or lesser than Required Qty!!");
-                //frappe.throw("");
+    //         }
+    //         if (qty > 0 && (qty < item[i].qty_required || qty > item[i].qty_required)) {
+    //             frappe.msgprint("Delivery Qty should not be greater or lesser than Required Qty!!");
+    //             //frappe.throw("");
 
-                validated = false;
-                return false;
-            }
+    //             validated = false;
+    //             return false;
+    //         }
 
-            // for (var j = 0; j < storage.length; j++) {
-            //   if (storage[j].item == item[i].item_code && storage[j].stored_qty > item[i].qty_required) {
-            //     storage[j].stored_qty = ''
-            //     frappe.msgprint("Stored Qty should not be greater than Qty Required!!");
-            //     //frappe.throw("");
-            //     validated = false;
-            //     return false;
+    //         // for (var j = 0; j < storage.length; j++) {
+    //         //   if (storage[j].item == item[i].item_code && storage[j].stored_qty > item[i].qty_required) {
+    //         //     storage[j].stored_qty = ''
+    //         //     frappe.msgprint("Stored Qty should not be greater than Qty Required!!");
+    //         //     //frappe.throw("");
+    //         //     validated = false;
+    //         //     return false;
 
-            //   }
-            // }
-            if (item[i].qty_required == undefined) {
-                frappe.msgprint("Delivery Quantity should not be greater than Required Qty!!")
-                //value.delivery_qty=''
-                validated = false;
-                return false;
-            }
-        }
-        var storage = frm.doc.storage_details
-        for (var i = 0; i < storage.length; i++) {
-            if (storage[i].delivery_qty > storage[i].stored_qty) {
-                frappe.msgprint("Delivery Quantity should not be greater than Stored Qty!!")
-                //value.delivery_qty=''
-                validated = false;
-                return false;
-            }
-        }
+    //         //   }
+    //         // }
+    //         if (item[i].qty_required == undefined) {
+    //             frappe.msgprint("Delivery Quantity should not be greater than Required Qty!!")
+    //             //value.delivery_qty=''
+    //             validated = false;
+    //             return false;
+    //         }
+    //     }
+    //     var storage = frm.doc.storage_details
+    //     for (var i = 0; i < storage.length; i++) {
+    //         if (storage[i].delivery_qty > storage[i].stored_qty) {
+    //             frappe.msgprint("Delivery Quantity should not be greater than Stored Qty!!")
+    //             //value.delivery_qty=''
+    //             validated = false;
+    //             return false;
+    //         }
+    //     }
 
 
-    }
+    // }
 });
 frappe.ui.form.on('Preparation Storage Details', {
 

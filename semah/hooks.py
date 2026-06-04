@@ -120,10 +120,13 @@ doc_events = {
      "Sales Invoice": {
 		"validate" : "semah.custom_script.sales_invoice.sales_invoice.validate",
 	},
+	         "Serial and Batch Bundle": {
+        "validate" : "semah.custom_script.serial_and_batch_bundle.serial_and_batch_bundle.validate",
+
+	},
 	
 	
 }
-
 # Scheduled Tasks
 # ---------------
 

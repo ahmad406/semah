@@ -230,7 +230,8 @@
    "allow_on_submit": 1,
    "fieldname": "barcode",
    "fieldtype": "Data",
-   "label": "Barcode"
+   "label": "Barcode",
+   "options": "Barcode"
   },
   {
    "fieldname": "scan_barcode_section",
@@ -297,13 +298,15 @@
    "label": "Note"
   }
  ],
+ "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-02-18 21:41:21.911282",
+ "modified": "2026-05-04 17:21:44.697438",
  "modified_by": "Administrator",
  "module": "Semah",
  "name": "Preparation Order Note",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
@@ -319,8 +322,11 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1,
  "track_seen": 1
 }

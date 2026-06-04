@@ -21,15 +21,13 @@
   {
    "fieldname": "capacity",
    "fieldtype": "Float",
-   "label": "Capacity",
-   "read_only": 1
+   "label": "Capacity"
   },
   {
    "fieldname": "item",
    "fieldtype": "Link",
    "label": "Item",
-   "options": "Item",
-   "read_only": 1
+   "options": "Item"
   },
   {
    "fieldname": "warehouse",
@@ -40,7 +38,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-11 12:10:54.127952",
+ "modified": "2026-03-02 12:20:47.872289",
  "modified_by": "Administrator",
  "module": "Semah",
  "name": "Pallet",
