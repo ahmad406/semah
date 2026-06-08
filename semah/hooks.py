@@ -130,23 +130,13 @@ doc_events = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"semah.tasks.all"
-# 	],
-# 	"daily": [
-# 		"semah.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"semah.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"semah.tasks.weekly"
-# 	]
-# 	"monthly": [
-# 		"semah.tasks.monthly"
-# 	]
-# }
+scheduler_events = {
+
+	"daily": [
+		"semah.custom_script.customer.customer.send_repo_to_all_customers"
+	],
+
+}
 
 # Testing
 # -------
