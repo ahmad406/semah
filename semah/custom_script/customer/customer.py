@@ -93,7 +93,7 @@ def send_repo_to_all_customers():
             continue  # skip customers with no report email
 
         frappe.enqueue(
-            "your_app.utils.customer_repo_report.process_customer_report",
+            "semah.custom_script.customer.customer.process_customer_report",
             customer_name=customer.name,
             email_to=email_to,
             cc_raw=customer.get(CC_FIELD) or "",
