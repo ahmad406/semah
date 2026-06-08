@@ -186,12 +186,9 @@ def _build_content(columns, data, filters):
 
     if REPORT_FORMAT == "XLSX":
         xlsx_data, col_widths, styles = build_xlsx_data(
-            report_data, [], 1, ignore_visible_idx=True, build_styles=True
+            report_data, [], 1, ignore_visible_idx=True
         )
-        return make_xlsx(
-            xlsx_data, REPORT_NAME, column_widths=col_widths, styles=styles
-        ).getvalue()
-
+        return make_xlsx(xlsx_data, REPORT_NAME, column_widths=col_widths, styles=styles).getvalue()
     elif REPORT_FORMAT == "CSV":
         from frappe.utils.csvutils import to_csv
         xlsx_data, _, _ = build_xlsx_data(
