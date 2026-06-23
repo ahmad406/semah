@@ -36,7 +36,7 @@ class PreparationOrderNote(Document):
 				)
 			
 			for bin_entry in item.bin:
-				if storage.bin_location_name == bin_entry.bin_location and storage.pallet == bin_entry.pallet:
+				if storage.bin_location_name == bin_entry.bin_location and storage.pallet == bin_entry.pallet and bin_entry.stored_qty > 0 :
 					if is_reduced:
 
 						if bin_entry.reserved_qty < storage.delivery_qty:
