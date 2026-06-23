@@ -26,7 +26,8 @@
   "length",
   "uom",
   "required_date",
-  "sub_customer"
+  "sub_customer",
+  "source_row"
  ],
  "fields": [
   {
@@ -183,18 +184,27 @@
    "fieldtype": "Data",
    "label": "Sub Customer",
    "read_only": 1
+  },
+  {
+   "fieldname": "source_row",
+   "fieldtype": "Data",
+   "label": "source_row"
   }
  ],
+ "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-07-07 19:55:09.665158",
+ "modified": "2026-06-12 10:12:42.499216",
  "modified_by": "Administrator",
  "module": "Semah",
  "name": "Preparation Storage Details barcode",
  "owner": "Administrator",
  "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1
 }

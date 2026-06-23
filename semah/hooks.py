@@ -19,7 +19,10 @@ app_include_js = [
     "https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"
 ]
 
-
+portal_menu_items = [
+    {"title": "My Stock", "route": "/wh-stock", "role": "Customer"},
+    {"title": "Delivery Requests", "route": "/wh-request", "role": "Customer"},
+]
 # include js, css files in header of web template
 # web_include_css = "/assets/semah/css/semah.css"
 # web_include_js = "/assets/semah/js/semah.js"

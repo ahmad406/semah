@@ -1,0 +1,111 @@
+{% extends "templates/web.html" %}
+
+{% block title %}{{ _("My Stock") }}{% endblock %}
+
+{% block page_content %}
+<div class="wh-portal" style="max-width: 1100px; margin: 0 auto; padding: 16px 0;">
+
+	<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+		<div>
+			<h2 style="margin:0;">{{ _("My Stock") }}</h2>
+			<p class="text-muted" style="margin:4px 0 0;">{{ portal.customer_name }}</p>
+		</div>
+		<a href="/wh-request" class="btn btn-primary">{{ _("Raise Delivery Request") }}</a>
+	</div>
+
+	<div class="row" style="margin-top:18px;">
+		<div class="col-6 col-md-3"><div class="wh-card"><div class="wh-num">{{ portal.total_items }}</div><div class="wh-lbl">{{ _("Items in storage") }}</div></div></div>
+		<div class="col-6 col-md-3"><div class="wh-card"><div class="wh-num">{{ portal.total_qty }}</div><div class="wh-lbl">{{ _("Total quantity") }}</div></div></div>
+		<div class="col-6 col-md-3"><div class="wh-card"><div class="wh-num" style="color:#dd6b20">{{ portal.reserved_qty }}</div><div class="wh-lbl">{{ _("Reserved for dispatch") }}</div></div></div>
+		<div class="col-6 col-md-3"><div class="wh-card"><div class="wh-num" style="color:#e53e3e">{{ portal.expiring_count }}</div><div class="wh-lbl">{{ _("Expiring in 30 days") }}</div></div></div>
+	</div>
+
+	<div style="margin-top:20px; display:flex; gap:10px;">
+		<input type="text" id="wh-search" class="form-control" style="max-width:340px;"
+			placeholder="{{ _('Search item, name or batch...') }}">
+		<button class="btn btn-default" onclick="loadStock()">{{ _("Search") }}</button>
+	</div>
+
+	<div id="wh-stock-table" style="margin-top:16px; overflow-x:auto;">
+		<div class="text-muted" style="padding:30px; text-align:center;">{{ _("Loading...") }}</div>
+	</div>
+</div>
+
+<style>
+.wh-card { background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:14px; margin-bottom:10px; }
+.wh-num { font-size:22px; font-weight:600; }
+.wh-lbl { font-size:12px; color:#718096; }
+.wh-badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; }
+.wh-exp-soon { background:#fed7d7; color:#9b2c2c; }
+.wh-exp-ok { background:#e6fffa; color:#234e52; }
+table.wh-tbl { width:100%; border-collapse:collapse; font-size:13px; background:#fff; }
+table.wh-tbl th { background:#f7fafc; text-align:left; padding:9px 10px; border-bottom:2px solid #e2e8f0; white-space:nowrap; }
+table.wh-tbl td { padding:8px 10px; border-bottom:1px solid #edf2f7; }
+table.wh-tbl tr:hover td { background:#f7fafc; }
+</style>
+
+<script>
+function loadStock() {
+	var search = document.getElementById('wh-search').value;
+	frappe.call({
+		method: 'semah.semah.api.portal.get_my_stock',
+		args: { search: search },
+		callback: function (r) {
+			renderStock(r.message || []);
+		}
+	});
+}
+
+function escHtml(s) {
+	return (s == null ? '' : String(s)).replace(/[&<>"']/g, function (c) {
+		return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+	});
+}
+
+function renderStock(rows) {
+	var el = document.getElementById('wh-stock-table');
+	if (!rows.length) {
+		el.innerHTML = '<div class="text-muted" style="padding:30px; text-align:center;">{{ _("No stock found.") }}</div>';
+		return;
+	}
+	var today = new Date();
+	var soon = new Date(); soon.setDate(soon.getDate() + 30);
+
+	var html = '<table class="wh-tbl"><thead><tr>' +
+		'<th>{{ _("Item") }}</th><th>{{ _("Warehouse") }}</th><th>{{ _("Bin") }}</th>' +
+		'<th>{{ _("Pallet") }}</th><th>{{ _("Batch") }}</th><th>{{ _("Expiry") }}</th>' +
+		'<th style="text-align:right">{{ _("Stored") }}</th>' +
+		'<th style="text-align:right">{{ _("Reserved") }}</th>' +
+		'<th style="text-align:right">{{ _("Available") }}</th>' +
+		'</tr></thead><tbody>';
+
+	rows.forEach(function (r) {
+		var expiryHtml = '-';
+		if (r.expiry) {
+			var d = new Date(r.expiry);
+			var cls = d <= soon ? 'wh-exp-soon' : 'wh-exp-ok';
+			expiryHtml = '<span class="wh-badge ' + cls + '">' + escHtml(frappe.datetime.str_to_user(r.expiry)) + '</span>';
+		}
+		html += '<tr>' +
+			'<td><b>' + escHtml(r.item_code) + '</b><br><small class="text-muted">' + escHtml(r.item_name || '') + '</small></td>' +
+			'<td>' + escHtml(r.warehouse || '-') + '</td>' +
+			'<td>' + escHtml(r.bin_location || '-') + '</td>' +
+			'<td>' + escHtml(r.pallet || '-') + '</td>' +
+			'<td>' + escHtml(r.batch_no || '-') + '</td>' +
+			'<td>' + expiryHtml + '</td>' +
+			'<td style="text-align:right">' + (r.stored_qty || 0) + '</td>' +
+			'<td style="text-align:right">' + (r.reserved_qty || 0) + '</td>' +
+			'<td style="text-align:right"><b>' + (r.available_qty || 0) + '</b></td>' +
+			'</tr>';
+	});
+	html += '</tbody></table>';
+	el.innerHTML = html;
+}
+
+document.getElementById('wh-search').addEventListener('keydown', function (e) {
+	if (e.key === 'Enter') loadStock();
+});
+
+frappe.ready(function () { loadStock(); });
+</script>
+{% endblock %}
