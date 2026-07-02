@@ -29,6 +29,7 @@ class CustomStockEntry(StockEntry):
           self.validate_uom_is_integer("uom", "qty")
           self.validate_uom_is_integer("stock_uom", "transfer_qty")
           self.validate_warehouse()
+          self.validate_storage_matches_items()
           self.validate_warehouse_of_sabb()
           self.validate_work_order()
           self.validate_source_stock_entry()
@@ -72,6 +73,50 @@ class CustomStockEntry(StockEntry):
           self.calculate_total_qty()
 
 
+     def validate_storage_matches_items(self):
+          if self.stock_entry_type!= "Material Receipt":
+               return
+          if not self.get("storage_details"):
+               return
+
+          # Sum qty per item+batch from item grid
+          item_totals = {}
+          for row in self.get("items"):
+               key = (row.item_code, row.batch_no or "")
+               item_totals[key] = item_totals.get(key, 0) + flt(row.qty)
+
+          # Sum stored_qty per item+batch from storage grid
+          storage_totals = {}
+          for row in self.get("storage_details"):
+               key = (row.item_code, row.batch_no or "")
+               storage_totals[key] = storage_totals.get(key, 0) + flt(row.stored_qty)
+
+          errors = []
+
+          # Check 1: every item+batch in storage must exist in item grid
+          for (item, batch) in storage_totals:
+               if (item, batch) not in item_totals:
+                    errors.append(
+                         _("Storage grid has <b>{0}</b> Batch <b>{1}</b> which is not in the item grid.").format(
+                              item, batch or "-"
+                         )
+                    )
+
+          # Check 2: totals must match
+          for (item, batch), item_qty in item_totals.items():
+               storage_qty = storage_totals.get((item, batch), 0)
+               if flt(storage_qty) != flt(item_qty):
+                    errors.append(
+                         _("<b>{0}</b> Batch <b>{1}</b> — item grid: <b>{2}</b>, storage total: <b>{3}</b>").format(
+                              item, batch or "-", item_qty, storage_qty
+                         )
+                    )
+
+          if errors:
+               frappe.throw(
+                    _("Storage grid does not match item grid:<br><br>") + "<br>".join(errors),
+                    title=_("Storage / Item Mismatch")
+               )
    
 
      # def validate(self):
