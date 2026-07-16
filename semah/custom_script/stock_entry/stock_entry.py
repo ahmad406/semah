@@ -492,7 +492,7 @@ class CustomStockEntry(StockEntry):
           return(combined)
       
      @frappe.whitelist()
-     def get_pallet(self, bin,item_code,expiry=None,batch=None):
+     def get_pallet(self, bin,item_code,warehouse,expiry=None,batch=None):
 
           item = frappe.get_doc("Item", item_code)
           has_expiry = item.has_expiry_date
@@ -503,13 +503,13 @@ class CustomStockEntry(StockEntry):
           if expiry:
                dt = frappe.db.sql("""
                     SELECT * FROM  `tabitem bin location`
-                    WHERE bin_location = %s AND expiry = %s and batch_no=%s AND stored_qty > 0
-               """, (bin, expiry,batch), as_dict=1)
+                    WHERE bin_location = %s AND expiry = %s and batch_no=%s and warehouse=%s AND stored_qty > 0
+               """, (bin, expiry,batch,warehouse), as_dict=1)
           else:
                dt = frappe.db.sql("""
                     SELECT * FROM  `tabitem bin location`
-                    WHERE bin_location = %s AND stored_qty > 0
-               """, (bin,), as_dict=1)
+                    WHERE bin_location = %s and  warehouse = %s AND stored_qty > 0
+               """, (bin,warehouse), as_dict=1)
 
           if len(dt) > 1:
                frappe.throw(f"Data Integrity Error: Multiple active entries for bin '{bin}' with stored_qty > 0")
