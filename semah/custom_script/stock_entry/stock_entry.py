@@ -435,6 +435,8 @@ class CustomStockEntry(StockEntry):
 
      def create_pallet(self):
           if self.stock_entry_type == 'Material Receipt':
+               series_number = self.get_series_number()
+
                import re
                for itm in self.get('storage_details'):
                     if not itm.pallet:
@@ -442,7 +444,12 @@ class CustomStockEntry(StockEntry):
                          if capacity <= 0:
                               frappe.throw(f"Item {itm.item_code} must have a valid 'Qty per Pallet' greater than 0.")
 
-                         plt="{}{}".format(self.get_series_number(),itm.idx)
+                         plt="{}{}".format(series_number,itm.idx)
+                         expected_pallet_name = "{}{}".format(series_number, itm.idx)
+                         if itm.pallet != expected_pallet_name:
+                              # skip — this pallet pre-existed the transaction
+                              continue
+
                          if not frappe.db.exists("Pallet", plt):
                               
                               doc=frappe.new_doc("Pallet")
