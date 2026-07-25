@@ -445,10 +445,6 @@ class CustomStockEntry(StockEntry):
                               frappe.throw(f"Item {itm.item_code} must have a valid 'Qty per Pallet' greater than 0.")
 
                          plt="{}{}".format(series_number,itm.idx)
-                         expected_pallet_name = "{}{}".format(series_number, itm.idx)
-                         if itm.pallet != expected_pallet_name:
-                              # skip — this pallet pre-existed the transaction
-                              continue
 
                          if not frappe.db.exists("Pallet", plt):
                               
@@ -461,6 +457,7 @@ class CustomStockEntry(StockEntry):
                          itm.pallet=plt
      def delete_pallet(self):
           if self.stock_entry_type == 'Material Receipt':
+               series_number = self.get_series_number()
                for itm in self.get('storage_details'):
                     if itm.pallet:
                          in_use = frappe.db.exists(
@@ -470,7 +467,10 @@ class CustomStockEntry(StockEntry):
                                    "parent": ["!=", self.name]  
                               }
                          )
-                         
+                         expected_pallet_name = "{}{}".format(series_number, itm.idx)
+                         if itm.pallet != expected_pallet_name:
+                              # skip — this pallet pre-existed the transaction
+                              continue
                          if in_use:
                               frappe.msgprint(f"Pallet {itm.pallet} is used in another record, skipping deletion.")
                               continue
