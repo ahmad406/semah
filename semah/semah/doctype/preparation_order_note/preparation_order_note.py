@@ -164,10 +164,15 @@ class PreparationOrderNote(Document):
 			dr.db_set("doc_status", "To Make Delivery Note")
 
 		self.update_reserved_qty()
+		self.validate_total()
 		# if frappe.session.user!='Administrator':
 		# 	self.validate_scanned()
 	# def on_update_after_submit(self):
 	# 	self.validate_scanned()
+
+	def validate_total(self):
+		if self.total_delivery_quantity != self.total_quantity:
+			frappe.throw(f"Total Delivery Quantity ({self.total_delivery_quantity}) does not match Total Quantity ({self.total_quantity}).")
 
 
 
@@ -201,7 +206,6 @@ class PreparationOrderNote(Document):
 		self.total_delivery_quantity = total_stored_qty
 		self.warehouse=warehouse
 		
-
 
 
 	def validate_scanned(self):
@@ -605,10 +609,10 @@ def bin_filter(doctype, txt, searchfield, start, page_len, filters):
 	"""
 
 	args = items + [f"%{txt}%", page_len, start]
-	frappe.errprint("QUERY TO EXECUTE:")
-	frappe.errprint(query)
-	frappe.errprint("ARGS:")
-	frappe.errprint(args)
+	# frappe.errprint("QUERY TO EXECUTE:")
+	# frappe.errprint(query)
+	# frappe.errprint("ARGS:")
+	# frappe.errprint(args)
 
 
 	return frappe.db.sql(query, args, as_dict=False)
