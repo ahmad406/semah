@@ -34,7 +34,6 @@ class CustomDeliveryNote(DeliveryNote):
 	@frappe.whitelist()
 	def before_submit(self):
 		self.update_bin_status()
-		self.update_pon_status()
 		self.update_preparation_order()
 
 		# Group storage rows by item_code so each item is fetched and saved once
@@ -86,6 +85,7 @@ class CustomDeliveryNote(DeliveryNote):
 
 			# All rows for this item mutated in memory — save once
 			item.save()
+		self.update_pon_status()
 
 	def before_cancel(self):
 		self.update_bin_status(canceled=True)
@@ -168,13 +168,11 @@ class CustomDeliveryNote(DeliveryNote):
 			frappe.msgprint(f"Bin {bin_name} updated to {status}")
 			frappe.db.set_value("Bin Name", bin_name, "status", status)
 
+
+
 	def update_pon_status(self):
-		order = frappe.get_doc('Preparation Order Note', self.prepration)
-		order.order_status = "Completed"
-		order.save()
-		request = frappe.get_doc('Delivery Request', self.delivery_request)
-		request.doc_status = "Completed"
-		request.save()
+		frappe.db.set_value('Preparation Order Note', self.prepration, 'order_status', 'Completed')
+		frappe.db.set_value('Delivery Request', self.delivery_request, 'doc_status', 'Completed')
 
 
 @frappe.whitelist()
