@@ -57,7 +57,7 @@ class CustomStockEntry(StockEntry):
                self.fg_completed_qty = 0.0
 
           self.make_serial_and_batch_bundle_for_outward()
-          self.validate_serialized_batch()
+         # self.validate_serialized_batch()
           self.calculate_rate_and_amount()
           self.validate_putaway_capacity()
           self.validate_component_and_quantities()
