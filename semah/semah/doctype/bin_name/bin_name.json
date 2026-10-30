@@ -9,7 +9,13 @@
   "warehouse",
   "bin_row",
   "bin_name",
-  "status"
+  "status",
+  "hold_section",
+  "on_hold",
+  "hold_reason",
+  "held_by",
+  "held_on",
+  "hold_ref"
  ],
  "fields": [
   {
@@ -39,11 +45,60 @@
    "fieldtype": "Data",
    "label": "Bin Row",
    "reqd": 1
+  },
+  {
+   "collapsible": 0,
+   "fieldname": "hold_section",
+   "fieldtype": "Section Break",
+   "label": "Hold"
+  },
+  {
+   "default": "0",
+   "fieldname": "on_hold",
+   "fieldtype": "Check",
+   "in_list_view": 0,
+   "label": "On Hold",
+   "no_copy": 1,
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "depends_on": "on_hold",
+   "fieldname": "hold_reason",
+   "fieldtype": "Small Text",
+   "label": "Hold Reason",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "on_hold",
+   "fieldname": "held_by",
+   "fieldtype": "Link",
+   "label": "Held By",
+   "no_copy": 1,
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "depends_on": "on_hold",
+   "fieldname": "held_on",
+   "fieldtype": "Datetime",
+   "label": "Held On",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "on_hold",
+   "fieldname": "hold_ref",
+   "fieldtype": "Data",
+   "label": "Hold Note",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-01 11:56:46.083727",
+ "modified": "2026-10-20 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Semah",
  "name": "Bin Name",

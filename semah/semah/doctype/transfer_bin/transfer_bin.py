@@ -3,6 +3,7 @@
 
 import frappe
 from frappe.model.document import Document
+from semah.semah.utils.bin_hold import assert_bin_not_held
 
 class TransferBin(Document):
 
@@ -223,6 +224,9 @@ class TransferBin(Document):
 		if data:
 			frappe.throw("Preparation Order Note already created against this bin: {0}".format(data[0]['name']))
 	def validate_transfer(self):
+		assert_bin_not_held(self.source_bin, "A held bin cannot be transferred.")
+		assert_bin_not_held(self.target_bin, "Stock cannot be moved into a held bin.")
+
 		# Check target bin
 		target = frappe.get_doc("Bin Name", self.target_bin)
 		if target.status == "Occupied":
