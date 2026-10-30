@@ -11,6 +11,7 @@ from frappe.model.document import Document
 from collections import defaultdict
 from frappe.utils import flt
 from semah.custom_script.delivery_note.delivery_note import convert_to_string
+from semah.semah.utils.bin_hold import assert_bin_not_held, get_held_free_qty, get_hold_info
 
 
 
@@ -50,6 +51,10 @@ class PreparationOrderNote(Document):
 							
 							bin_entry.reserved_qty += storage.delivery_qty
 						else:
+							assert_bin_not_held(
+								bin_entry.bin_location,
+								f"Cannot reserve item {storage.item} from it. Re-allocate the order or release the bin."
+							)
 							available_for_reserve = bin_entry.stored_qty - bin_entry.reserved_qty
 							if available_for_reserve < storage.delivery_qty:
 								frappe.throw(
@@ -91,12 +96,14 @@ class PreparationOrderNote(Document):
 				stock_rows = frappe.db.sql("""
 					SELECT * FROM `tabitem bin location`
 					WHERE parent = %s AND stored_qty - reserved_qty > 0 AND (expiry IS NULL OR expiry >= NOW())
+					AND NOT EXISTS (SELECT 1 FROM `tabBin Name` bn WHERE bn.name = `tabitem bin location`.bin_location AND bn.on_hold = 1)
 					ORDER BY expiry ASC, stored_qty ASC
 				""", (item_code,), as_dict=True)
 			else:
 				stock_rows = frappe.db.sql("""
 					SELECT * FROM `tabitem bin location`
 					WHERE parent = %s AND stored_qty - reserved_qty > 0
+					AND NOT EXISTS (SELECT 1 FROM `tabBin Name` bn WHERE bn.name = `tabitem bin location`.bin_location AND bn.on_hold = 1)
 					ORDER BY stored_qty ASC
 				""", (item_code,), as_dict=True)
 
@@ -139,7 +146,9 @@ class PreparationOrderNote(Document):
 				})
 
 			if qty_required > 0:
-				frappe.throw(f"Insufficient stock for item {item_code}")
+				held_qty = get_held_free_qty(item_code)
+				hint = f" ({held_qty} more is in bins on hold)" if held_qty else ""
+				frappe.throw(f"Insufficient stock for item {item_code}{hint}")
 
 		# Sort rows by bin location for better readability
 		all_rows.sort(key=lambda x: x.get("bin_location_name") or "")
@@ -157,6 +166,24 @@ class PreparationOrderNote(Document):
 
 		
 		
+
+	def before_submit(self):
+		self.validate_held_bins()
+
+	def validate_held_bins(self):
+		errors = []
+		for row in self.storage_details:
+			info = get_hold_info(row.bin_location_name)
+			if info:
+				errors.append(
+					f"Row {row.idx}: bin <b>{row.bin_location_name}</b> is on hold"
+					+ (f" ({info.hold_reason})" if info.hold_reason else "")
+				)
+		if errors:
+			frappe.throw(
+				"<br>".join(errors) + "<br><br>Re-allocate the order or release the bin.",
+				title="Bin On Hold",
+			)
 
 	def on_submit(self):
 		if self.delivery_request:

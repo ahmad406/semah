@@ -15,10 +15,11 @@ def execute(filters=None):
 	 select  p.customer_ as customer,p.stock_uom,p.item_name,p.sku,p.disabled,p.name as item_code,
 	 b.customer_batch_id,c.batch_no as batch,c.sub_customer,c.warehouse,p.has_batch_no,c.bin_location,c.reserved_qty,
 	 c.batch_no,c.expiry,c.stored_in,c.length,c.width,c.height,c.area_use,c.stored_qty,c.manufacturing_date,
-	 c.pallet
+	 c.pallet, ifnull(bn.on_hold,0) as on_hold, bn.hold_reason
 	   from `tabitem bin location` c
  inner join `tabItem` p on c.parent=p.name
- left join `tabBatch` b on c.batch_no=b.name where c.stored_qty >0 {0}
+ left join `tabBatch` b on c.batch_no=b.name
+ left join `tabBin Name` bn on bn.name=c.bin_location where c.stored_qty >0 {0}
 	""".format(conditions)
 	frappe.errprint(sql)
 	raw =frappe.db.sql(sql,as_dict=1)
@@ -50,7 +51,9 @@ def execute(filters=None):
 						"pallet" : i.pallet,
 						"area_used" :i.area_use,
 						"reserved_qty" :i.reserved_qty,
-						"available_qty" :i.stored_qty-i.reserved_qty,
+						"available_qty" : 0 if i.on_hold else i.stored_qty-i.reserved_qty,
+						"on_hold" : "Yes" if i.on_hold else "No",
+						"hold_reason" : i.hold_reason if i.on_hold else "",
 
 
 				})
@@ -90,6 +93,10 @@ def get_conditions(filters):
 		conditions=conditions+' and p.sku like "%{0}%" '.format(filters.get("sku"))
 	if filters.get("pallet"):
 		conditions=conditions+' and c.pallet = "{0}" '.format(filters.get("pallet"))
+	if filters.get("on_hold") == "Held":
+		conditions=conditions+' and ifnull(bn.on_hold,0) = 1 '
+	elif filters.get("on_hold") == "Not held":
+		conditions=conditions+' and ifnull(bn.on_hold,0) = 0 '
 	return conditions
 
 
@@ -197,6 +204,18 @@ def get_columns():
 			'fieldtype': 'Link',
 			'options': 'Bin Name',
 			'width': 150,
+		},
+		{
+			'label': _('On Hold'),
+			'fieldname': "on_hold",
+			'fieldtype': 'Data',
+			'width': 80,
+		},
+		{
+			'label': _('Hold Reason'),
+			'fieldname': "hold_reason",
+			'fieldtype': 'Data',
+			'width': 200,
 		},
 					{
 			'label': _('Pallet'),

@@ -11,12 +11,14 @@ import collections
 
 from erpnext.stock.doctype.stock_entry.stock_entry import  StockEntry
 from erpnext.stock.doctype.stock_entry.stock_entry import *
+from semah.semah.utils.bin_hold import assert_bin_not_held
 
 class CustomStockEntry(StockEntry):
      def validate(self):
           self.pro_doc = frappe._dict()
           self.update_batch()
           self.validate_unique_bins()
+          self.validate_held_bins()
           if self.work_order:
                self.pro_doc = frappe.get_doc("Work Order", self.work_order)
 
@@ -229,6 +231,15 @@ class CustomStockEntry(StockEntry):
                     d.batch = d.batch_no
 
                
+
+     def validate_held_bins(self):
+          before = self.get_doc_before_save()
+          if before and before.docstatus == 1:
+               return  # already submitted receipt, only edited after submit
+          if self.stock_entry_type == 'Material Receipt':
+               for row in self.storage_details:
+                    if row.bin_location:
+                         assert_bin_not_held(row.bin_location, f"Row {row.idx}: stock cannot be put away into a held bin.")
 
      def validate_unique_bins(self):
           if self.stock_entry_type == 'Material Receipt':

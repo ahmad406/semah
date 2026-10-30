@@ -1,0 +1,99 @@
+{
+ "actions": [],
+ "creation": "2026-10-20 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "bin",
+  "warehouse",
+  "items_in_bin",
+  "stored_qty",
+  "reserved_qty",
+  "free_qty",
+  "currently_on_hold",
+  "prior_hold_reason",
+  "prior_hold_ref"
+ ],
+ "fields": [
+  {
+   "fieldname": "bin",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Bin",
+   "options": "Bin Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "warehouse",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Warehouse",
+   "read_only": 1
+  },
+  {
+   "fieldname": "items_in_bin",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Items in Bin",
+   "read_only": 1
+  },
+  {
+   "fieldname": "stored_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Stored Qty",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reserved_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Reserved Qty",
+   "read_only": 1
+  },
+  {
+   "fieldname": "free_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Free Qty",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "currently_on_hold",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Currently On Hold",
+   "read_only": 1
+  },
+  {
+   "fieldname": "prior_hold_reason",
+   "fieldtype": "Small Text",
+   "hidden": 1,
+   "label": "Prior Hold Reason",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "prior_hold_ref",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Prior Hold Note",
+   "read_only": 1,
+   "no_copy": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-20 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Semah",
+ "name": "Stock Hold Bin",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

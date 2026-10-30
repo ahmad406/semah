@@ -5,6 +5,7 @@
 import frappe
 from frappe import _
 from frappe.utils import flt, nowdate, now_datetime
+from semah.semah.utils.bin_hold import assert_bin_not_held, get_hold_info
 
 
 def _assert_stock_role():
@@ -458,6 +459,7 @@ def assign_bin_to_row(se_name=None, row_name=None, bin_location=None):
 		if not frappe.db.exists("Bin Name", bin_location):
 			frappe.throw(_("Bin {0} does not exist.").format(bin_location))
 
+		assert_bin_not_held(bin_location, "Stock cannot be put away into a held bin.")
 		bin_status   = frappe.db.get_value("Bin Name", bin_location, "status")
 		stored_total = frappe.db.sql(
 			"SELECT COALESCE(SUM(stored_qty),0) FROM `tabitem bin location` WHERE bin_location=%s AND stored_qty>0",
@@ -641,6 +643,15 @@ def check_bin_for_putaway(bin_name=None, item_code=None, batch_no=None, expiry=N
 
 		if not frappe.db.exists("Bin Name", bin_name):
 			return {"status": "not_found", "message": _("Bin {0} does not exist.").format(bin_name)}
+
+		held = get_hold_info(bin_name)
+		if held:
+			return {
+				"status": "not_found",
+				"message": _("Bin {0} is on hold ({1}). Stock cannot be put away into it.").format(
+					bin_name, held.hold_reason or held.hold_ref or "-"
+				),
+			}
 
 		existing = frappe.db.sql(
 			"""
