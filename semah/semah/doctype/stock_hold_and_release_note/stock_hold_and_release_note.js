@@ -10,7 +10,7 @@ frappe.ui.form.on('Stock Hold and Release Note', {
 			if (frm.doc.action === 'Release') {
 				return { filters: { on_hold: 1 } };
 			}
-			return { filters: { status: ['in', ['Occupied', 'Partially Occupied']] } };
+			return { filters: { status: ['in', ['Occupied', 'Partially Occupied']], on_hold: 0 } };
 		});
 	},
 

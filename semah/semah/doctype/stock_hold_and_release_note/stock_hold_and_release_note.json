@@ -121,8 +121,7 @@
    "fieldname": "bins",
    "fieldtype": "Table",
    "label": "Bins",
-   "options": "Stock Hold Bin",
-   "reqd": 1
+   "options": "Stock Hold Bin"
   },
   {
    "fieldname": "amended_from",
