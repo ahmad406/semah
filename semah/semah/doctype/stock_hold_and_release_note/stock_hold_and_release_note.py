@@ -181,7 +181,7 @@ def find_bins(receipt_no=None, bin_name=None, item=None, warehouse=None, custome
 		if se.docstatus != 1 or se.stock_entry_type != "Material Receipt":
 			frappe.throw(_("{0} must be a submitted Material Receipt.").format(receipt_no))
 		conds.append("""EXISTS (
-			SELECT 1 FROM `tabStorage Details` sd
+			SELECT 1 FROM `tabStorage details` sd
 			WHERE sd.parent = %(receipt_no)s AND sd.parenttype = 'Stock Entry'
 			AND sd.item_code = c.parent
 			AND sd.bin_location = c.bin_location
