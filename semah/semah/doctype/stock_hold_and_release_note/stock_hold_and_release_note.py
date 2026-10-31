@@ -220,13 +220,7 @@ def find_bins(receipt_no=None, bin_name=None, item=None, warehouse=None, custome
 		""".format(" AND ".join(conds)),
 		params,
 	)
-	found = [r[0] for r in rows]
-
-	# an explicit bin filter on its own can also be an empty bin
-	only_bin = bin_name and not any([receipt_no, item, warehouse, customer, batch_no])
-	if only_bin and not found and frappe.db.exists("Bin Name", bin_name):
-		found = [bin_name]
-	return found
+	return [r[0] for r in rows]
 
 
 def get_bin_contents(bins):

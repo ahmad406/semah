@@ -2,6 +2,16 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Stock Hold and Release Note', {
+	setup(frm) {
+		// Hold: occupied bins only. Release: held bins only.
+		frm.set_query('bin', () => {
+			if (frm.doc.action === 'Release') {
+				return { filters: { on_hold: 1 } };
+			}
+			return { filters: { status: ['in', ['Occupied', 'Partially Occupied']] } };
+		});
+	},
+
 	refresh(frm) {
 		// bins come from Fetch Bins; rows can be removed but not typed in
 		frm.get_field('bins').grid.cannot_add_rows = true;
@@ -9,6 +19,7 @@ frappe.ui.form.on('Stock Hold and Release Note', {
 	},
 
 	action(frm) {
+		frm.set_value('bin', null);
 		frm.clear_table('bins');
 		frm.refresh_field('bins');
 	},
