@@ -3,6 +3,8 @@
 
 frappe.ui.form.on('Stock Hold and Release Note', {
 	setup(frm) {
+		frm.set_query('receipt_no', () => ({ filters: { docstatus: 1 } }));
+
 		// Hold: occupied bins only. Release: held bins only.
 		frm.set_query('bin', () => {
 			if (frm.doc.action === 'Release') {
