@@ -241,6 +241,12 @@ class CustomStockEntry(StockEntry):
                     if row.bin_location:
                          assert_bin_not_held(row.bin_location, f"Row {row.idx}: stock cannot be put away into a held bin.")
 
+     def validate_held_bins_on_cancel(self):
+          if self.stock_entry_type == 'Material Receipt':
+               for row in self.storage_details:
+                    if row.bin_location:
+                         assert_bin_not_held(row.bin_location, f"Row {row.idx}: this receipt cannot be cancelled while its bin is on hold. Release the bin first.")
+
      def validate_unique_bins(self):
           if self.stock_entry_type == 'Material Receipt':
                if not self.bulk_stock_entry:
@@ -346,6 +352,7 @@ class CustomStockEntry(StockEntry):
 
      @frappe.whitelist()
      def before_cancel(self):
+          self.validate_held_bins_on_cancel()
           self.update_bin_status(not_canceled=False)
           def revert_bin_location(target_doc, bin_details):
                """
