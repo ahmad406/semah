@@ -243,9 +243,14 @@ class CustomStockEntry(StockEntry):
 
      def validate_held_bins_on_cancel(self):
           if self.stock_entry_type == 'Material Receipt':
-               for row in self.storage_details:
-                    if row.bin_location:
-                         assert_bin_not_held(row.bin_location, f"Row {row.idx}: this receipt cannot be cancelled while its bin is on hold. Release the bin first.")
+               bins = list({r.bin_location for r in self.storage_details if r.bin_location})
+               if not bins:
+                    return
+               held = frappe.db.sql(
+                    "SELECT name FROM `tabBin Name` WHERE name IN %s AND on_hold = 1 LIMIT 1", (bins,)
+               )
+               if held:
+                    assert_bin_not_held(held[0][0], "This receipt cannot be cancelled while its bin is on hold. Release the bin first.")
 
      def validate_unique_bins(self):
           if self.stock_entry_type == 'Material Receipt':
@@ -424,10 +429,15 @@ class CustomStockEntry(StockEntry):
 
           # Main logic for different stock entry types
           if self.stock_entry_type == 'Material Receipt':
+               # one Item load and save per item, not per storage row
+               rows_by_item = {}
                for itm in self.get('storage_details'):
-                    target_doc = frappe.get_doc("Item", itm.item_code)
-                    if not handle_bin(target_doc, itm, reduce=True):  # Reduce stored_qty
-                         frappe.throw(f"Failed to handle bin for item {itm.item_code}")
+                    rows_by_item.setdefault(itm.item_code, []).append(itm)
+               for item_code, rows in rows_by_item.items():
+                    target_doc = frappe.get_doc("Item", item_code)
+                    for itm in rows:
+                         if not handle_bin(target_doc, itm, reduce=True):  # Reduce stored_qty
+                              frappe.throw(f"Failed to handle bin for item {itm.item_code}")
                     target_doc.save()
 
           elif self.stock_entry_type == 'Transfer to Quarantine':
