@@ -12,6 +12,7 @@ import collections
 from erpnext.stock.doctype.stock_entry.stock_entry import  StockEntry
 from erpnext.stock.doctype.stock_entry.stock_entry import *
 from semah.semah.utils.bin_hold import assert_bin_not_held
+from semah.semah.utils.item_bins import load_item_bins, save_item_bins
 
 class CustomStockEntry(StockEntry):
      def validate(self):
@@ -429,33 +430,26 @@ class CustomStockEntry(StockEntry):
 
           # Main logic for different stock entry types
           if self.stock_entry_type == 'Material Receipt':
-               # one Item load and save per item, not per storage row
-               rows_by_item = {}
+               bins_by_item = load_item_bins(itm.item_code for itm in self.get('storage_details'))
                for itm in self.get('storage_details'):
-                    rows_by_item.setdefault(itm.item_code, []).append(itm)
-               for item_code, rows in rows_by_item.items():
-                    target_doc = frappe.get_doc("Item", item_code)
-                    for itm in rows:
-                         if not handle_bin(target_doc, itm, reduce=True):  # Reduce stored_qty
-                              frappe.throw(f"Failed to handle bin for item {itm.item_code}")
-                    target_doc.save()
+                    if not handle_bin(bins_by_item[itm.item_code], itm, reduce=True):  # Reduce stored_qty
+                         frappe.throw(f"Failed to handle bin for item {itm.item_code}")
+               save_item_bins(bins_by_item)
 
           elif self.stock_entry_type == 'Transfer to Quarantine':
+               bins_by_item = load_item_bins(itm.item_code for itm in self.get('storage_details'))
                for itm in self.get('storage_details'):
-                    target_doc = frappe.get_doc("Item", itm.item_code)
-                    if not revert_bin_location(target_doc, itm):
+                    if not revert_bin_location(bins_by_item[itm.item_code], itm):
                          frappe.throw(f"Failed to revert bin for item {itm.item_code}")
-                    # frappe.throw("no")
-                    
-                    target_doc.save()
+               save_item_bins(bins_by_item)
 
  
           elif self.stock_entry_type == 'Quarantine Item Issue to Customer':
+               bins_by_item = load_item_bins(itm.item_code for itm in self.get('storage_details'))
                for itm in self.get('storage_details'):
-                    target_doc = frappe.get_doc("Item", itm.item_code)
-                    if not handle_bin(target_doc, itm, reduce=False):  # Add stored_qty
+                    if not handle_bin(bins_by_item[itm.item_code], itm, reduce=False):  # Add stored_qty
                          frappe.throw(f"Failed to handle bin for item {itm.item_code}")
-                    target_doc.save()
+               save_item_bins(bins_by_item)
           # self.update_bin_status(is_cancelled=1)
           self.delete_pallet()
 
@@ -529,8 +523,7 @@ class CustomStockEntry(StockEntry):
      @frappe.whitelist()
      def get_pallet(self, bin,item_code,warehouse,expiry=None,batch=None):
 
-          item = frappe.get_doc("Item", item_code)
-          has_expiry = item.has_expiry_date
+          has_expiry = frappe.db.get_value("Item", item_code, "has_expiry_date")
 
           if has_expiry and not expiry:
                frappe.throw(f"Expiry date is required for item '{item_code}' in bin '{bin}' because it has expiry enabled.")
@@ -745,8 +738,9 @@ class CustomStockEntry(StockEntry):
                     return True
                return False
 
+          bins_by_item = load_item_bins(item.item_code for item in self.get('storage_details'))
           for item in self.get('storage_details'):
-               target_doc = frappe.get_doc("Item", item.item_code)
+               target_doc = bins_by_item[item.item_code]
 
                if self.stock_entry_type == 'Material Receipt':
                     if not update_or_create_bin(target_doc, item, action='add'):
@@ -759,9 +753,8 @@ class CustomStockEntry(StockEntry):
                elif self.stock_entry_type == 'Quarantine Item Issue to Customer':
                     if not update_or_create_bin(target_doc, item, action='reduce'):
                          frappe.throw(f"Item not found: {item.item_code} with batch {item.batch_no}")
-               
 
-               target_doc.save()
+          save_item_bins(bins_by_item)
 
      @frappe.whitelist()
      def updatestorage(self, bin):
