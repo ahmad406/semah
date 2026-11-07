@@ -12,6 +12,7 @@ from collections import defaultdict
 from frappe.utils import flt
 from semah.custom_script.delivery_note.delivery_note import convert_to_string
 from semah.semah.utils.bin_hold import assert_bin_not_held, get_held_free_qty, get_hold_info
+from semah.semah.utils.item_bins import load_item_bins, save_item_bins
 
 
 
@@ -25,10 +26,11 @@ class PreparationOrderNote(Document):
 		- is_cancel=True   : cancel flow; skip availability validation
 		"""
 
+		bins_by_item = load_item_bins(storage.item for storage in self.get('storage_details'))
+
 		for storage in self.get('storage_details'):
 			reserved = False
-			# Always fetch item by item_code
-			item = frappe.get_doc("Item", storage.item)
+			item = bins_by_item[storage.item]
 
 			# Ensure bin + pallet exist
 			if not storage.bin_location_name or not storage.pallet:
@@ -72,7 +74,7 @@ class PreparationOrderNote(Document):
 					f"in warehouse '{storage.warehouse}' at bin '{storage.bin_location_name}' with pallet '{storage.pallet}'."
 				)
 
-			item.save()
+		save_item_bins(bins_by_item)
 
 
 

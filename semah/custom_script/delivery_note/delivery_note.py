@@ -4,6 +4,7 @@ import frappe
 from frappe.utils import flt
 from erpnext.stock.doctype.delivery_note.delivery_note import DeliveryNote
 from erpnext.stock.doctype.delivery_note.delivery_note import *
+from semah.semah.utils.item_bins import ItemBins
 
 
 def _calculate_area_use(length, width, height, stored_qty):
@@ -41,8 +42,8 @@ class CustomDeliveryNote(DeliveryNote):
 		for storage in self.get('storage_details'):
 			rows_by_item[storage.item_code].append(storage)
 
-		for item_code, rows in rows_by_item.items():
-			item = frappe.get_doc("Item", item_code)
+		for item_code, rows in sorted(rows_by_item.items()):
+			item = ItemBins(item_code)
 
 			for storage in rows:
 				matched = False
@@ -94,8 +95,8 @@ class CustomDeliveryNote(DeliveryNote):
 		for storage in self.get('storage_details'):
 			rows_by_item[storage.item_code].append(storage)
 
-		for item_code, rows in rows_by_item.items():
-			item = frappe.get_doc("Item", item_code)
+		for item_code, rows in sorted(rows_by_item.items()):
+			item = ItemBins(item_code)
 
 			for storage in rows:
 				matched = False
