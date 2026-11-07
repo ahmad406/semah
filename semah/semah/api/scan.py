@@ -260,7 +260,9 @@ def finalize_scan(pon_name=None):
 			frappe.throw(_("Quantity mismatches:\n{0}").format("\n".join(mismatches)))
 
 		pon_doc.allow_delivery = "1"
-		pon_doc.order_status   = "To make Delivery Note"
+		# A Delivery Note can be submitted while scanning is still in progress.
+		if pon_doc.order_status not in ("Completed", "Cancelled"):
+			pon_doc.order_status = "To make Delivery Note"
 		pon_doc.flags.ignore_permissions = True
 		pon_doc.save()
 
