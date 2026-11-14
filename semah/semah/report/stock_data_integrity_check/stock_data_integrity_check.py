@@ -18,6 +18,10 @@ def execute(filters=None):
 		if check["severity"] == INFO and not filters.include_info and filters.check != check["label"]:
 			continue
 		for row in check["fn"](filters):
+			# MariaDB can return concat() over numeric/date columns as binary depending on server collation settings.
+			for key, value in row.items():
+				if isinstance(value, bytes):
+					row[key] = value.decode()
 			row.update(check=check["label"], severity=check["severity"])
 			data.append(row)
 
@@ -173,7 +177,7 @@ def reserved_exceeds_stored(filters):
 	cond, params = build(filters, "l.warehouse", "l.parent")
 	return frappe.db.sql(
 		f"""select l.parent as item_code, l.warehouse, l.bin_location, l.stored_qty as location_qty,
-			concat('Reserved ', l.reserved_qty, ' but only ', l.stored_qty, ' stored') as details
+			concat('Reserved ', cast(l.reserved_qty as char), ' but only ', cast(l.stored_qty as char), ' stored') as details
 		from `tabitem bin location` l
 		where ifnull(l.reserved_qty, 0) > l.stored_qty + 0.001 and l.modified >= %(from_date)s {cond}""",
 		params,
@@ -239,7 +243,7 @@ def duplicate_location_rows(filters):
 	return frappe.db.sql(
 		f"""select l.parent as item_code, l.warehouse, l.bin_location, sum(l.stored_qty) as location_qty,
 			nullif(l.batch_no, '') as reference_name, if(ifnull(l.batch_no, '') = '', null, 'Batch') as reference_doctype,
-			concat(count(*), ' rows for the same item, bin and batch') as details
+			concat(cast(count(*) as char), ' rows for the same item, bin and batch') as details
 		from `tabitem bin location` l
 		where l.stored_qty > 0 and l.modified >= %(from_date)s {cond}
 		group by l.parent, l.warehouse, l.bin_location, nullif(l.batch_no, '')
@@ -284,7 +288,7 @@ def wrong_uom_conversion(filters):
 	return frappe.db.sql(
 		f"""select d.item_code, ifnull(d.t_warehouse, d.s_warehouse) as warehouse,
 			'Stock Entry' as reference_doctype, d.parent as reference_name, d.transfer_qty as ledger_qty,
-			concat('Row ', d.idx, ': UOM ', d.uom, ' vs stock UOM ', d.stock_uom, ' with conversion factor 1') as details
+			concat('Row ', cast(d.idx as char), ': UOM ', d.uom, ' vs stock UOM ', d.stock_uom, ' with conversion factor 1') as details
 		from `tabStock Entry Detail` d
 		join `tabStock Entry` se on se.name = d.parent
 		where d.docstatus = 1 and d.uom != d.stock_uom and d.conversion_factor = 1
@@ -314,7 +318,7 @@ def expired_stock(filters):
 	return frappe.db.sql(
 		f"""select l.parent as item_code, l.warehouse, l.bin_location, l.stored_qty as location_qty,
 			l.batch_no as reference_name, if(ifnull(l.batch_no, '') = '', null, 'Batch') as reference_doctype,
-			concat('Expired on ', l.expiry) as details
+			concat('Expired on ', cast(l.expiry as char)) as details
 		from `tabitem bin location` l
 		where l.stored_qty > 0 and l.expiry < curdate() and l.expiry >= %(from_date)s {cond}""",
 		params,
