@@ -198,6 +198,7 @@ def bin_outside_warehouse(filters):
 	cond, params = build(filters, "l.warehouse", "l.parent")
 	return frappe.db.sql(
 		f"""select l.parent as item_code, l.warehouse, l.bin_location, l.stored_qty as location_qty,
+			nullif(l.batch_no, '') as reference_name, if(ifnull(l.batch_no, '') = '', null, 'Batch') as reference_doctype,
 			concat('Bin belongs to ', n.warehouse) as details
 		from `tabitem bin location` l
 		join `tabBin Name` n on n.name = l.bin_location
@@ -237,10 +238,11 @@ def duplicate_location_rows(filters):
 	cond, params = build(filters, "l.warehouse", "l.parent")
 	return frappe.db.sql(
 		f"""select l.parent as item_code, l.warehouse, l.bin_location, sum(l.stored_qty) as location_qty,
+			nullif(l.batch_no, '') as reference_name, if(ifnull(l.batch_no, '') = '', null, 'Batch') as reference_doctype,
 			concat(count(*), ' rows for the same item, bin and batch') as details
 		from `tabitem bin location` l
 		where l.stored_qty > 0 and l.modified >= %(from_date)s {cond}
-		group by l.parent, l.warehouse, l.bin_location, ifnull(l.batch_no, '')
+		group by l.parent, l.warehouse, l.bin_location, nullif(l.batch_no, '')
 		having count(*) > 1""",
 		params,
 		as_dict=1,
@@ -282,7 +284,7 @@ def wrong_uom_conversion(filters):
 	return frappe.db.sql(
 		f"""select d.item_code, ifnull(d.t_warehouse, d.s_warehouse) as warehouse,
 			'Stock Entry' as reference_doctype, d.parent as reference_name, d.transfer_qty as ledger_qty,
-			concat('UOM ', d.uom, ' vs stock UOM ', d.stock_uom, ' with conversion factor 1') as details
+			concat('Row ', d.idx, ': UOM ', d.uom, ' vs stock UOM ', d.stock_uom, ' with conversion factor 1') as details
 		from `tabStock Entry Detail` d
 		join `tabStock Entry` se on se.name = d.parent
 		where d.docstatus = 1 and d.uom != d.stock_uom and d.conversion_factor = 1
