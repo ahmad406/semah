@@ -1,0 +1,248 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "SDI-.#####",
+ "creation": "2026-11-14 13:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "check",
+  "severity",
+  "status",
+  "fix_action",
+  "column_break_main",
+  "detected_on",
+  "last_seen_on",
+  "issue_key",
+  "section_item",
+  "item_code",
+  "item_name",
+  "customer",
+  "column_break_item",
+  "warehouse",
+  "bin_location",
+  "reference_doctype",
+  "reference_name",
+  "section_qty",
+  "ledger_qty",
+  "location_qty",
+  "difference",
+  "details",
+  "section_resolution",
+  "fixed_by",
+  "fixed_on",
+  "column_break_resolution",
+  "resolution_notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "check",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Check",
+   "read_only": 1
+  },
+  {
+   "fieldname": "severity",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Severity",
+   "options": "Critical\nWarning\nInfo",
+   "read_only": 1
+  },
+  {
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Open\nFixed\nIgnored",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fix_action",
+   "fieldtype": "Data",
+   "label": "Fix Action",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "detected_on",
+   "fieldtype": "Datetime",
+   "label": "Detected On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_seen_on",
+   "fieldtype": "Datetime",
+   "label": "Last Seen On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "issue_key",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Issue Key",
+   "length": 512,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "section_item",
+   "fieldtype": "Section Break",
+   "label": "Item"
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Item",
+   "options": "Item",
+   "read_only": 1
+  },
+  {
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "label": "Item Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Customer",
+   "options": "Customer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_item",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Warehouse",
+   "options": "Warehouse",
+   "read_only": 1
+  },
+  {
+   "fieldname": "bin_location",
+   "fieldtype": "Data",
+   "label": "Bin Location",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Link",
+   "label": "Reference Type",
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Reference",
+   "options": "reference_doctype",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_qty",
+   "fieldtype": "Section Break",
+   "label": "Details"
+  },
+  {
+   "fieldname": "ledger_qty",
+   "fieldtype": "Float",
+   "label": "Ledger Qty",
+   "read_only": 1
+  },
+  {
+   "fieldname": "location_qty",
+   "fieldtype": "Float",
+   "label": "Location Qty",
+   "read_only": 1
+  },
+  {
+   "fieldname": "difference",
+   "fieldtype": "Float",
+   "label": "Difference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "details",
+   "fieldtype": "Small Text",
+   "label": "Details",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_resolution",
+   "fieldtype": "Section Break",
+   "label": "Resolution"
+  },
+  {
+   "fieldname": "fixed_by",
+   "fieldtype": "Link",
+   "label": "Fixed / Ignored By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixed_on",
+   "fieldtype": "Datetime",
+   "label": "Fixed / Ignored On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_resolution",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "resolution_notes",
+   "fieldtype": "Small Text",
+   "label": "Resolution Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-14 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Semah",
+ "name": "Stock Data Issue",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 0,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Stock Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "check",
+ "track_changes": 1
+}
