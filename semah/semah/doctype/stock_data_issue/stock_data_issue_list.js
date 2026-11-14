@@ -29,6 +29,9 @@ frappe.listview_settings["Stock Data Issue"] = {
 	onload(listview) {
 		listview.page.add_inner_button(__("Scan Now"), () => scan_dialog(listview));
 		listview.page.add_inner_button(__("Fix Issues"), () => fix_dialog(listview)).addClass("btn-primary");
+		if (frappe.user.has_role("System Manager")) {
+			listview.page.add_inner_button(__("Clear Old Issues"), () => clear_dialog(listview));
+		}
 		listview.page.add_actions_menu_item(__("Ignore Selected"), () => {
 			const names = listview.get_checked_items(true);
 			if (!names.length) return frappe.msgprint(__("Select records first"));
@@ -45,6 +48,57 @@ frappe.listview_settings["Stock Data Issue"] = {
 		});
 	},
 };
+
+function clear_dialog(listview) {
+	const d = new frappe.ui.Dialog({
+		title: __("Clear Old Issues"),
+		fields: [
+			{
+				fieldname: "info",
+				fieldtype: "HTML",
+				options: `<div class="text-muted small mb-2">${__(
+					"Deletes Stock Data Issue records only. Stock data is not changed. Open issues will be found again on the next scan."
+				)}</div>`,
+			},
+			{ fieldname: "fixed", fieldtype: "Check", label: __("Fixed"), default: 1 },
+			{ fieldname: "ignored", fieldtype: "Check", label: __("Ignored"), default: 1 },
+			{ fieldname: "open", fieldtype: "Check", label: __("Open") },
+			{
+				fieldname: "before_date",
+				fieldtype: "Date",
+				label: __("Only issues last seen before"),
+				description: __("Leave empty to clear all issues with the selected status"),
+			},
+		],
+		primary_action_label: __("Clear"),
+		primary_action(values) {
+			const statuses = [
+				values.fixed && "Fixed",
+				values.ignored && "Ignored",
+				values.open && "Open",
+			].filter(Boolean);
+			if (!statuses.length) return frappe.msgprint(__("Select at least one status"));
+			const scope = values.before_date
+				? __("last seen before {0}", [frappe.datetime.str_to_user(values.before_date)])
+				: __("of any date");
+			frappe.confirm(
+				__("Permanently delete <b>{0}</b> issues {1}?", [statuses.join(", "), scope]),
+				() =>
+					frappe.call({
+						method: `${SDI_API}.clear_issues`,
+						args: { statuses, before_date: values.before_date },
+						freeze: true,
+						callback: (r) => {
+							d.hide();
+							frappe.show_alert({ message: __("Deleted {0} issue(s)", [r.message]), indicator: "green" });
+							listview.refresh();
+						},
+					})
+			);
+		},
+	});
+	d.show();
+}
 
 function scan_dialog(listview) {
 	const d = new frappe.ui.Dialog({

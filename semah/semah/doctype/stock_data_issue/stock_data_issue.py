@@ -103,6 +103,23 @@ def scan(from_date=None, include_info=0):
 
 
 @frappe.whitelist()
+def clear_issues(statuses, before_date=None):
+	frappe.only_for("System Manager")
+	statuses = json.loads(statuses) if isinstance(statuses, str) else statuses
+	statuses = [s for s in statuses or [] if s in ("Open", "Fixed", "Ignored")]
+	if not statuses:
+		frappe.throw(_("Select at least one status"))
+
+	filters = {"status": ["in", statuses]}
+	if before_date:
+		filters["last_seen_on"] = ["<", before_date]
+	count = frappe.db.count("Stock Data Issue", filters)
+	frappe.db.delete("Stock Data Issue", filters)
+	frappe.db.commit()
+	return count
+
+
+@frappe.whitelist()
 def apply_fix(name):
 	check_permission()
 	return _apply_fix(frappe.get_doc("Stock Data Issue", name))
