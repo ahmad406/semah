@@ -283,14 +283,18 @@ def bin_status_mismatch(filters):
 
 
 def wrong_uom_conversion(filters):
-	"""A transaction UOM different from stock UOM with factor 1 means qty was booked 1:1 in the wrong unit."""
+	"""Flag rows booked at factor 1 only when the Item's UOM list defines a different factor for that UOM.
+	UOMs missing from the list, or listed with factor 1 (e.g. Kg and Nos both 1), are intentional 1:1."""
 	cond, params = build(filters, "ifnull(d.t_warehouse, d.s_warehouse)", "d.item_code")
 	return frappe.db.sql(
 		f"""select d.item_code, ifnull(d.t_warehouse, d.s_warehouse) as warehouse,
 			'Stock Entry' as reference_doctype, d.parent as reference_name, d.transfer_qty as ledger_qty,
-			concat('Row ', cast(d.idx as char), ': UOM ', d.uom, ' vs stock UOM ', d.stock_uom, ' with conversion factor 1') as details
+			concat('Row ', cast(d.idx as char), ': UOM ', d.uom, ' booked with factor 1 but Item defines ',
+				cast(cast(ucd.conversion_factor as double) as char), ' ', d.stock_uom, ' per ', d.uom) as details
 		from `tabStock Entry Detail` d
 		join `tabStock Entry` se on se.name = d.parent
+		join `tabUOM Conversion Detail` ucd on ucd.parent = d.item_code and ucd.parenttype = 'Item'
+			and ucd.uom = d.uom and ucd.conversion_factor != 1
 		where d.docstatus = 1 and d.uom != d.stock_uom and d.conversion_factor = 1
 			and se.posting_date >= %(from_date)s {cond}""",
 		params,
